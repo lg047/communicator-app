@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <head>
 
   <!-- Open Graph tags for link previews -->
   <meta property="og:title" content="Tototype">
@@ -59,6 +58,7 @@
       height: 225px;  /* adjust as needed */
       z-index: 999;
       pointer-events: none;
+    }
     #hideImages {
       position: fixed;
       bottom: 10px;
@@ -169,11 +169,14 @@
     });
 
     // Focus on load
-    window.onload = () => editor.focus();
+    window.onload = () => {
+    editor.focus();
     document.getElementById('hideImages').addEventListener('click', () => {
     document.getElementById('dog').style.display = 'none';
     document.getElementById('jpHead').style.display = 'none';
     });
+};
+
 
   </script>
   <img src="pipi_new1.png" id="dog">
