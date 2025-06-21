@@ -40,10 +40,17 @@
       border-radius: 3px; cursor: pointer;
     }
     #shortcuts {
-      position: fixed; bottom: 10px; left: 10px;
-      background: rgba(255,255,255,0.6); padding: 4px 6px;
+      position: fixed; bottom: 10px; left: 50%;
+      transform: translateX(-50%); background: rgba(255,255,255,0.6); padding: 4px 6px;
       border-radius: 4px; font-size: 0.8rem; color: #333333;
       pointer-events: none; z-index: 1000;
+    }
+    #dog {
+      position: fixed;
+      bottom: 40px;
+      left: 0;
+      height: 80px;  /* adjust as needed */
+      pointer-events: none;
     }
   </style>
 </head>
@@ -140,5 +147,6 @@
     // Focus on load
     window.onload = () => editor.focus();
   </script>
+  <img src="pipi.png" id="dog">
 </body>
 </html>
