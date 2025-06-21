@@ -59,6 +59,20 @@
       height: 225px;  /* adjust as needed */
       z-index: 999;
       pointer-events: none;
+    #hideImages {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      z-index: 1001;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+}
+
 }
 
     
@@ -159,5 +173,6 @@
   </script>
   <img src="pipi_new1.png" id="dog">
   <img src="jp.png" id="jpHead">
+  <button id="hideImages">✖</button>
 </body>
 </html>
