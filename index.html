@@ -170,6 +170,11 @@
 
     // Focus on load
     window.onload = () => editor.focus();
+    document.getElementById('hideImages').addEventListener('click', () => {
+    document.getElementById('dog').style.display = 'none';
+    document.getElementById('jpHead').style.display = 'none';
+    });
+
   </script>
   <img src="pipi_new1.png" id="dog">
   <img src="jp.png" id="jpHead">
