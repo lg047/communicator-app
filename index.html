@@ -169,13 +169,17 @@
     });
 
     // Focus on load
+
     window.onload = () => {
     editor.focus();
-    document.getElementById('hideImages').addEventListener('click', () => {
+    const hideBtn = document.getElementById('hideImages');
+    hideBtn.addEventListener('click', () => {
     document.getElementById('dog').style.display = 'none';
     document.getElementById('jpHead').style.display = 'none';
-    });
+    hideBtn.style.display = 'none'; // <-- this is the line in question
+  });
 };
+
 
 
   </script>
