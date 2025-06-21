@@ -52,6 +52,17 @@
       height: 160px;  /* adjust as needed */
       pointer-events: none;
     }
+    #jpHead {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 50px;  /* adjust as needed */
+      z-index: 999;
+      pointer-events: none;
+}
+
+    
   </style>
 </head>
 <body>
@@ -148,5 +159,6 @@
     window.onload = () => editor.focus();
   </script>
   <img src="pipi.png" id="dog">
+  <img src="jp.png" id="jpHead">
 </body>
 </html>
