@@ -195,7 +195,8 @@
     zoomOutBtn.addEventListener('click', () => { fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize(); editor.focus(); });
 
     editor.addEventListener('input', () => {
-      if (readySwitch.checked) adjustFontSizeToFit();
+      // Always adjust font size when content changes
+      adjustFontSizeToFit();
       updateState();
     });
     document.addEventListener('keydown', e => {
