@@ -182,11 +182,15 @@
     // Dark mode switch
     darkSwitch.addEventListener('change', () => {
       if (darkSwitch.checked) {
+        // turn off ready state when enabling dark
+        readySwitch.checked = false;
+        body.style.backgroundColor = '#000000';
         body.classList.add('dark-mode');
       } else {
         body.classList.remove('dark-mode');
-        body.style.backgroundColor = '#ffffff';
+        body.style.backgroundColor = readySwitch.checked ? RED_BG : '#ffffff';
       }
+      updateShortcuts();
     });
 
     // Ready-state switch
@@ -197,7 +201,7 @@
         body.classList.remove('dark-mode');
         body.style.backgroundColor = RED_BG;
       } else {
-        body.style.backgroundColor = darkSwitch.checked ? '' : '#ffffff';
+        body.style.backgroundColor = '#ffffff';
       }
       updateShortcuts();
     });
