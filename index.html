@@ -11,50 +11,97 @@
   <link rel="icon" href="/tototype_icon_new.png" type="image/png">
   <title>TotoType</title>
   <style>
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-      background-color: #ffffff; /* default white */ font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background-color: #ffffff; /* default white */
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       transition: background-color 0.3s, color 0.3s;
     }
     body.dark-mode { background-color: #000000 !important; color: #ffffff !important; }
-    #editor { width: 100%; height: calc(100% - 60px); /* adjusted for top bar */
-      font-size: 6vw; line-height: 1.2; white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
-      outline: none; padding: 90px 200px; box-sizing: border-box; color: inherit;
+
+    /* Editor area */
+    #editor {
+      width: 100%; height: calc(100% - 60px); /* adjusted for top bar */
+      font-size: 6vw; line-height: 1.2;
+      white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
+      outline: none; padding: 90px 200px; box-sizing: border-box;
+      color: inherit;
     }
-    /* Top bar */
-    #topbar { position: fixed; top: 0; left: 0; width: 100%; height: 40px;
-      background: rgba(255,255,255,0.8); display: flex; justify-content: flex-end; align-items: center;
+
+    /* Top bar (transparent) */
+    #topbar {
+      position: fixed; top: 0; left: 0; width: 100%; height: 40px;
+      background: transparent;
+      display: flex; justify-content: flex-end; align-items: center;
       padding: 0 10px; box-sizing: border-box; z-index: 1000;
     }
-    body.dark-mode #topbar { background: rgba(0,0,0,0.8); }
-    #settingsBtn { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: inherit; }
-    #settingsMenu { position: fixed; top: 40px; right: 10px; background: rgba(255,255,255,0.9);
-      border: 1px solid #ccc; border-radius: 4px; display: none; flex-direction: column; padding: 5px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1001;
+
+    /* Settings button (flat, larger) */
+    #settingsBtn {
+      background: none; border: none;
+      font-size: 2rem; /* larger icon */
+      cursor: pointer; color: inherit;
+      padding: 0 8px;
     }
-    body.dark-mode #settingsMenu { background: rgba(0,0,0,0.9); border-color: #444; }
+
+    /* Settings menu */
+    #settingsMenu {
+      position: fixed; top: 40px; right: 10px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid #ccc; border-radius: 4px;
+      display: none; flex-direction: column; padding: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 1001;
+    }
+    body.dark-mode #settingsMenu {
+      background: rgba(0,0,0,0.9); border-color: #444;
+    }
+
     .settings-item { margin: 5px 0; }
-    .settings-item button { width: 100%; text-align: left; background: none; border: none; padding: 5px;
-      font-size: 0.9rem; cursor: pointer; color: inherit;
+    .settings-item button {
+      width: 100%; text-align: left;
+      background: none; border: none;
+      padding: 5px; font-size: 0.9rem;
+      cursor: pointer; color: inherit;
     }
-    #controls { position: fixed; bottom: 10px; right: 10px; background: rgba(255,255,255,0.7);
-      padding: 5px; border-radius: 5px; display: flex; gap: 5px; z-index: 1000;
+
+    /* Zoom controls at bottom-right */
+    #controls {
+      position: fixed; bottom: 10px; right: 10px;
+      background: rgba(255,255,255,0.7); padding: 5px;
+      border-radius: 5px; display: flex; gap: 5px;
+      z-index: 1000;
     }
     body.dark-mode #controls { background: rgba(0,0,0,0.7); }
-    #controls button { font-size: 1rem; padding: 0.2em 0.5em; border: none;
-      border-radius: 3px; cursor: pointer; background: none; color: inherit;
+    #controls button {
+      font-size: 1rem; padding: 0.2em 0.5em;
+      border: none; border-radius: 3px;
+      cursor: pointer; background: none; color: inherit;
     }
-    #shortcuts { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
-      background: rgba(255,255,255,0.6); padding: 4px 6px; border-radius: 4px;
-      font-size: 0.8rem; color: #333333; pointer-events: none; z-index: 1000;
+
+    /* Shortcut hint at bottom-center */
+    #shortcuts {
+      position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+      background: rgba(255,255,255,0.6); padding: 4px 6px;
+      border-radius: 4px; font-size: 0.8rem;
+      color: #333333; pointer-events: none; z-index: 1000;
     }
-    body.dark-mode #shortcuts { background: rgba(0,0,0,0.6); color: #ddd; }
-    #dog, #jpHead { position: fixed; bottom: 0; pointer-events: none; height: 240px; }
+    body.dark-mode #shortcuts {
+      background: rgba(0,0,0,0.6); color: #ddd;
+    }
+
+    /* Decorative images */
+    #dog, #jpHead {
+      position: fixed; bottom: 0; pointer-events: none;
+      height: 240px;
+    }
     #jpHead { right: 0; height: 225px; z-index: 999; }
   </style>
 </head>
 <body>
   <div id="topbar">
-    <button id="settingsBtn">⚙️</button>
+    <!-- Flat gear icon -->
+    <button id="settingsBtn">⚙</button>
   </div>
   <div id="settingsMenu">
     <div class="settings-item"><button id="toggleDark">Dark Mode: Off</button></div>
@@ -62,6 +109,7 @@
     <div class="settings-item"><button id="toggleImages">Hide Images</button></div>
   </div>
   <div id="editor" contenteditable="true" spellcheck="false"></div>
+
   <div id="controls">
     <button id="zoomOut">A-</button>
     <button id="zoomIn">A+</button>
@@ -101,10 +149,11 @@
       if (readyEnabled) html = 'Ctrl+Enter: Ready | ' + html;
       shortcuts.innerHTML = html;
     }
-    // Initial
+
+    // Initial setup
     setFontSize(); updateShortcuts(); body.style.backgroundColor = '#ffffff';
 
-    // Settings menu toggle
+    // Toggle settings menu
     settingsBtn.addEventListener('click', () => {
       settingsMenu.style.display = settingsMenu.style.display === 'flex' ? 'none' : 'flex';
     });
@@ -117,13 +166,14 @@
       settingsMenu.style.display = 'none';
     });
 
-    // Ready-state
+    // Ready state
     toggleReadyBtn.addEventListener('click', () => {
       readyEnabled = !readyEnabled;
       toggleReadyBtn.textContent = `Ready-State: ${readyEnabled ? 'On' : 'Off'}`;
       if (!readyEnabled) body.style.backgroundColor = darkMode ? '' : '#ffffff';
       else if (!darkMode) body.style.backgroundColor = RED_BG;
-      updateShortcuts(); settingsMenu.style.display = 'none';
+      updateShortcuts();
+      settingsMenu.style.display = 'none';
     });
 
     // Show/hide images
@@ -134,7 +184,7 @@
       settingsMenu.style.display = 'none';
     });
 
-    // Zoom
+    // Zoom controls
     zoomInBtn.addEventListener('click', () => { fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize(); editor.focus(); });
     zoomOutBtn.addEventListener('click', () => { fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize(); editor.focus(); });
 
