@@ -21,7 +21,7 @@
 
     /* Editor area */
     #editor {
-      width: 100%; height: calc(100% - 60px); /* adjusted for top bar */
+      width: 100%; height: calc(100% - 80px); /* adjusted for top bar */
       font-size: 6vw; line-height: 1.2;
       white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
       outline: none; padding: 90px 200px; box-sizing: border-box;
@@ -30,7 +30,7 @@
 
     /* Top bar (transparent) */
     #topbar {
-      position: fixed; top: 0; left: 0; width: 100%; height: 60px;
+      position: fixed; top: 0; left: 0; width: 100%; height: 80px;
       background: transparent;
       display: flex; justify-content: flex-end; align-items: center;
       padding: 0 15px; box-sizing: border-box; z-index: 1000;
@@ -39,14 +39,14 @@
     /* Settings button (flat, larger, grey) */
     #settingsBtn {
       background: none; border: none;
-      font-size: 3rem; /* larger icon */
+      font-size: 4rem; /* even larger icon */
       cursor: pointer; color: #888; /* grey */
       padding: 0 10px;
     }
 
     /* Settings menu */
     #settingsMenu {
-      position: fixed; top: 60px; right: 10px;
+      position: fixed; top: 80px; right: 10px;
       background: rgba(255,255,255,0.9);
       border: 1px solid #ccc; border-radius: 4px;
       display: none; flex-direction: column; padding: 5px;
