@@ -36,11 +36,10 @@
       padding: 0 15px; box-sizing: border-box; z-index: 1000;
     }
 
-    /* Settings button (flat, larger, grey) */
+    /* Settings button (flat, grey) */
     #settingsBtn {
       background: none; border: none;
-      font-size: 4rem; /* even larger icon */
-      cursor: pointer; color: #888; /* grey */
+      font-size: 4rem; cursor: pointer; color: #888;
       padding: 0 10px;
     }
 
@@ -49,28 +48,37 @@
       position: fixed; top: 80px; right: 10px;
       background: rgba(255,255,255,0.9);
       border: 1px solid #ccc; border-radius: 4px;
-      display: none; flex-direction: column; padding: 5px;
+      display: none; flex-direction: column; padding: 10px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       z-index: 1001;
     }
-    body.dark-mode #settingsMenu {
-      background: rgba(0,0,0,0.9); border-color: #444;
-    }
+    body.dark-mode #settingsMenu { background: rgba(0,0,0,0.9); border-color: #444; }
 
-    .settings-item { margin: 5px 0; }
-    .settings-item button {
-      width: 100%; text-align: left;
-      background: none; border: none;
-      padding: 5px; font-size: 0.9rem;
-      cursor: pointer; color: inherit;
+    .settings-item { display: flex; align-items: center; margin: 8px 0; }
+    .switch {
+      position: relative; display: inline-block; width: 50px; height: 24px;
+      margin-right: 8px;
     }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s; border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 18px; width: 18px;
+      left: 3px; bottom: 3px; background-color: white;
+      transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #2196F3; }
+    input:checked + .slider:before { transform: translateX(26px); }
+
+    .switch-label { font-size: 0.9rem; color: inherit; }
 
     /* Zoom controls at bottom-right */
     #controls {
       position: fixed; bottom: 10px; right: 10px;
       background: rgba(255,255,255,0.7); padding: 5px;
-      border-radius: 5px; display: flex; gap: 5px;
-      z-index: 1000;
+      border-radius: 5px; display: flex; gap: 5px; z-index: 1000;
     }
     body.dark-mode #controls { background: rgba(0,0,0,0.7); }
     #controls button {
@@ -83,12 +91,10 @@
     #shortcuts {
       position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
       background: rgba(255,255,255,0.6); padding: 4px 6px;
-      border-radius: 4px; font-size: 0.8rem;
-      color: #333333; pointer-events: none; z-index: 1000;
+      border-radius: 4px; font-size: 0.8rem; color: #333333;
+      pointer-events: none; z-index: 1000;
     }
-    body.dark-mode #shortcuts {
-      background: rgba(0,0,0,0.6); color: #ddd;
-    }
+    body.dark-mode #shortcuts { background: rgba(0,0,0,0.6); color: #ddd; }
 
     /* Decorative images */
     #dog, #jpHead {
@@ -100,14 +106,32 @@
 </head>
 <body>
   <div id="topbar">
-    <!-- Flat grey gear icon -->
     <button id="settingsBtn">⚙</button>
   </div>
   <div id="settingsMenu">
-    <div class="settings-item"><button id="toggleDark">Dark Mode: Off</button></div>
-    <div class="settings-item"><button id="toggleReady">Ready-State: Off</button></div>
-    <div class="settings-item"><button id="toggleImages">Hide Images</button></div>
+    <div class="settings-item">
+      <label class="switch">
+        <input type="checkbox" id="darkSwitch">
+        <span class="slider"></span>
+      </label>
+      <span class="switch-label">Dark Mode</span>
+    </div>
+    <div class="settings-item">
+      <label class="switch">
+        <input type="checkbox" id="readySwitch">
+        <span class="slider"></span>
+      </label>
+      <span class="switch-label">Ready-State</span>
+    </div>
+    <div class="settings-item">
+      <label class="switch">
+        <input type="checkbox" id="imagesSwitch" checked>
+        <span class="slider"></span>
+      </label>
+      <span class="switch-label">Show Images</span>
+    </div>
   </div>
+
   <div id="editor" contenteditable="true" spellcheck="false"></div>
 
   <div id="controls">
@@ -124,18 +148,15 @@
     const editor = document.getElementById('editor');
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsMenu = document.getElementById('settingsMenu');
-    const toggleDarkBtn = document.getElementById('toggleDark');
-    const toggleReadyBtn = document.getElementById('toggleReady');
-    const toggleImagesBtn = document.getElementById('toggleImages');
+    const darkSwitch = document.getElementById('darkSwitch');
+    const readySwitch = document.getElementById('readySwitch');
+    const imagesSwitch = document.getElementById('imagesSwitch');
     const zoomInBtn = document.getElementById('zoomIn');
     const zoomOutBtn = document.getElementById('zoomOut');
     const shortcuts = document.getElementById('shortcuts');
     const dog = document.getElementById('dog');
     const jpHead = document.getElementById('jpHead');
 
-    let darkMode = false;
-    let readyEnabled = false;
-    let imagesVisible = true;
     let fontSizeVW = 6;
     const RED_BG = '#ffecec', GREEN_BG = '#ecffec';
 
@@ -146,63 +167,80 @@
     }
     function updateShortcuts() {
       let html = 'Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom';
-      if (readyEnabled) html = 'Ctrl+Enter: Ready | ' + html;
+      if (readySwitch.checked) html = 'Ctrl+Enter: Ready | ' + html;
       shortcuts.innerHTML = html;
     }
 
     // Initial setup
     setFontSize(); updateShortcuts(); body.style.backgroundColor = '#ffffff';
+    settingsMenu.style.display = 'none';
 
-    // Toggle settings menu
+    // Show/hide settings menu
     settingsBtn.addEventListener('click', () => {
       settingsMenu.style.display = settingsMenu.style.display === 'flex' ? 'none' : 'flex';
     });
 
-    // Dark mode
-    toggleDarkBtn.addEventListener('click', () => {
-      darkMode = !darkMode;
-      body.classList.toggle('dark-mode', darkMode);
-      toggleDarkBtn.textContent = `Dark Mode: ${darkMode ? 'On' : 'Off'}`;
-      settingsMenu.style.display = 'none';
+    // Dark mode switch
+    darkSwitch.addEventListener('change', () => {
+      if (darkSwitch.checked) {
+        body.classList.add('dark-mode');
+      } else {
+        body.classList.remove('dark-mode');
+        body.style.backgroundColor = '#ffffff';
+      }
     });
 
-    // Ready state
-    toggleReadyBtn.addEventListener('click', () => {
-      readyEnabled = !readyEnabled;
-      toggleReadyBtn.textContent = `Ready-State: ${readyEnabled ? 'On' : 'Off'}`;
-      if (!readyEnabled) body.style.backgroundColor = darkMode ? '' : '#ffffff';
-      else if (!darkMode) body.style.backgroundColor = RED_BG;
+    // Ready-state switch
+    readySwitch.addEventListener('change', () => {
+      if (readySwitch.checked) {
+        body.style.backgroundColor = RED_BG;
+      } else {
+        body.style.backgroundColor = darkSwitch.checked ? '' : '#ffffff';
+      }
       updateShortcuts();
-      settingsMenu.style.display = 'none';
     });
 
-    // Show/hide images
-    toggleImagesBtn.addEventListener('click', () => {
-      imagesVisible = !imagesVisible;
-      dog.style.display = jpHead.style.display = imagesVisible ? '' : 'none';
-      toggleImagesBtn.textContent = imagesVisible ? 'Hide Images' : 'Show Images';
-      settingsMenu.style.display = 'none';
+    // Images switch
+    imagesSwitch.addEventListener('change', () => {
+      const visible = imagesSwitch.checked;
+      dog.style.display = jpHead.style.display = visible ? '' : 'none';
     });
 
     // Zoom controls
-    zoomInBtn.addEventListener('click', () => { fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize(); editor.focus(); });
-    zoomOutBtn.addEventListener('click', () => { fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize(); editor.focus(); });
+    zoomInBtn.addEventListener('click', () => {
+      fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize(); editor.focus();
+    });
+    zoomOutBtn.addEventListener('click', () => {
+      fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize(); editor.focus();
+    });
 
     // Typing behavior
     editor.addEventListener('input', () => {
-      if (readyEnabled && !darkMode) { body.style.backgroundColor = RED_BG; adjustFontSizeToFit(); }
-      else if (!darkMode) { body.style.backgroundColor = '#ffffff'; }
+      if (readySwitch.checked) {
+        body.style.backgroundColor = RED_BG;
+        adjustFontSizeToFit();
+      } else if (!darkSwitch.checked) {
+        body.style.backgroundColor = '#ffffff';
+      }
     });
+
+    // Ctrl+Enter for Ready
     document.addEventListener('keydown', e => {
-      if (readyEnabled && !darkMode && e.ctrlKey && e.key === 'Enter') {
-        e.preventDefault(); body.style.backgroundColor = GREEN_BG; editor.focus(); }
+      if (readySwitch.checked && e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault(); body.style.backgroundColor = GREEN_BG; editor.focus();
+      }
       if (e.ctrlKey && e.key === 'Backspace') {
         e.preventDefault(); editor.focus(); document.execCommand('selectAll'); document.execCommand('delete');
         fontSizeVW = 6; setFontSize();
-        if (!darkMode) body.style.backgroundColor = readyEnabled ? RED_BG : '#ffffff';
+        if (readySwitch.checked) body.style.backgroundColor = RED_BG;
+        else if (!darkSwitch.checked) body.style.backgroundColor = '#ffffff';
       }
-      if (e.ctrlKey && (e.key === '+' || e.key === '=')) { e.preventDefault(); fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize(); }
-      if (e.ctrlKey && e.key === '-') { e.preventDefault(); fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize(); }
+      if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
+        e.preventDefault(); fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize();
+      }
+      if (e.ctrlKey && e.key === '-') {
+        e.preventDefault(); fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize();
+      }
     });
 
     window.onload = () => { editor.focus(); };
