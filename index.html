@@ -54,10 +54,9 @@
     }
     body.dark-mode #settingsMenu { background: rgba(0,0,0,0.9); border-color: #444; }
 
-    .settings-item { display: flex; align-items: center; margin: 8px 0; }
+    .settings-item { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; width: 180px; }
     .switch {
       position: relative; display: inline-block; width: 50px; height: 24px;
-      margin-right: 8px;
     }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider {
@@ -110,25 +109,25 @@
   </div>
   <div id="settingsMenu">
     <div class="settings-item">
+      <span class="switch-label">Dark Mode</span>
       <label class="switch">
         <input type="checkbox" id="darkSwitch">
         <span class="slider"></span>
       </label>
-      <span class="switch-label">Dark Mode</span>
     </div>
     <div class="settings-item">
+      <span class="switch-label">Ready-State</span>
       <label class="switch">
         <input type="checkbox" id="readySwitch">
         <span class="slider"></span>
       </label>
-      <span class="switch-label">Ready-State</span>
     </div>
     <div class="settings-item">
+      <span class="switch-label">Show Images</span>
       <label class="switch">
         <input type="checkbox" id="imagesSwitch" checked>
         <span class="slider"></span>
       </label>
-      <span class="switch-label">Show Images</span>
     </div>
   </div>
 
@@ -175,7 +174,7 @@
     setFontSize(); updateShortcuts(); body.style.backgroundColor = '#ffffff';
     settingsMenu.style.display = 'none';
 
-    // Show/hide settings menu
+    // Toggle settings menu
     settingsBtn.addEventListener('click', () => {
       settingsMenu.style.display = settingsMenu.style.display === 'flex' ? 'none' : 'flex';
     });
@@ -193,6 +192,9 @@
     // Ready-state switch
     readySwitch.addEventListener('change', () => {
       if (readySwitch.checked) {
+        // turn off dark mode when enabling ready
+        darkSwitch.checked = false;
+        body.classList.remove('dark-mode');
         body.style.backgroundColor = RED_BG;
       } else {
         body.style.backgroundColor = darkSwitch.checked ? '' : '#ffffff';
