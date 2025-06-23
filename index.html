@@ -2,213 +2,160 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-
   <!-- Open Graph tags for link previews -->
   <meta property="og:title" content="Tototype">
   <meta property="og:description" content="A simple speech interface for fast communication.">
   <meta property="og:image" content="https://postimg.cc/F1sD5n4P">
   <meta property="og:url" content="https://tototype.com">
   <meta property="og:type" content="website">
-
   <link rel="icon" href="/tototype_icon_new.png" type="image/png">
   <title>TotoType</title>
   <style>
-    html, body {
-      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-      background-color: #ffffff; /* default white */
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background-color: #ffffff; /* default white */ font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       transition: background-color 0.3s, color 0.3s;
     }
-    body.dark-mode {
-      background-color: #000000 !important;
-      color: #ffffff !important;
+    body.dark-mode { background-color: #000000 !important; color: #ffffff !important; }
+    #editor { width: 100%; height: calc(100% - 60px); /* adjusted for top bar */
+      font-size: 6vw; line-height: 1.2; white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
+      outline: none; padding: 90px 200px; box-sizing: border-box; color: inherit;
     }
-    #editor {
-      width: 100%;
-      height: calc(100% - 90px); /* adjust for controls height */
-      font-size: 6vw; line-height: 1.2;
-      white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
-      outline: none; padding: 90px 200px; box-sizing: border-box;
-      color: inherit;
+    /* Top bar */
+    #topbar { position: fixed; top: 0; left: 0; width: 100%; height: 40px;
+      background: rgba(255,255,255,0.8); display: flex; justify-content: flex-end; align-items: center;
+      padding: 0 10px; box-sizing: border-box; z-index: 1000;
     }
-    #controls {
-      position: fixed; bottom: 40px; right: 10px;
-      background: rgba(255,255,255,0.7); padding: 5px; border-radius: 5px;
-      display: flex; gap: 5px; z-index: 1000;
+    body.dark-mode #topbar { background: rgba(0,0,0,0.8); }
+    #settingsBtn { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: inherit; }
+    #settingsMenu { position: fixed; top: 40px; right: 10px; background: rgba(255,255,255,0.9);
+      border: 1px solid #ccc; border-radius: 4px; display: none; flex-direction: column; padding: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1001;
     }
-    body.dark-mode #controls {
-      background: rgba(0,0,0,0.7);
+    body.dark-mode #settingsMenu { background: rgba(0,0,0,0.9); border-color: #444; }
+    .settings-item { margin: 5px 0; }
+    .settings-item button { width: 100%; text-align: left; background: none; border: none; padding: 5px;
+      font-size: 0.9rem; cursor: pointer; color: inherit;
     }
-    #controls button {
-      font-size: 1rem; padding: 0.2em 0.5em; border: none;
-      border-radius: 3px; cursor: pointer;
-      background: none;
-      color: inherit;
+    #controls { position: fixed; bottom: 10px; right: 10px; background: rgba(255,255,255,0.7);
+      padding: 5px; border-radius: 5px; display: flex; gap: 5px; z-index: 1000;
     }
-    #toggles {
-      position: fixed; bottom: 40px; left: 10px;
-      display: flex; gap: 5px; z-index: 1000;
+    body.dark-mode #controls { background: rgba(0,0,0,0.7); }
+    #controls button { font-size: 1rem; padding: 0.2em 0.5em; border: none;
+      border-radius: 3px; cursor: pointer; background: none; color: inherit;
     }
-    #toggles button {
-      font-size: 0.9rem; padding: 0.3em 0.6em; border: none;
-      border-radius: 3px; cursor: pointer;
-      background: rgba(255,255,255,0.7);
-      color: #000;
+    #shortcuts { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+      background: rgba(255,255,255,0.6); padding: 4px 6px; border-radius: 4px;
+      font-size: 0.8rem; color: #333333; pointer-events: none; z-index: 1000;
     }
-    body.dark-mode #toggles button {
-      background: rgba(0,0,0,0.7);
-      color: #fff;
-    }
-    #shortcuts {
-      position: fixed; bottom: 10px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,0.6); padding: 4px 6px;
-      border-radius: 4px; font-size: 0.8rem; color: #333333;
-      pointer-events: none; z-index: 1000;
-    }
-    body.dark-mode #shortcuts {
-      background: rgba(0,0,0,0.6);
-      color: #ddd;
-    }
-    #dog, #jpHead {
-      position: fixed; bottom: 0; pointer-events: none;
-      height: 240px;
-    }
+    body.dark-mode #shortcuts { background: rgba(0,0,0,0.6); color: #ddd; }
+    #dog, #jpHead { position: fixed; bottom: 0; pointer-events: none; height: 240px; }
     #jpHead { right: 0; height: 225px; z-index: 999; }
-    #hideImages {
-      position: fixed; bottom: 10px; left: 10px; z-index: 1001;
-      background: rgba(0,0,0,0.7); color: white; border: none;
-      border-radius: 3px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer;
-    }
   </style>
 </head>
 <body>
+  <div id="topbar">
+    <button id="settingsBtn">⚙️</button>
+  </div>
+  <div id="settingsMenu">
+    <div class="settings-item"><button id="toggleDark">Dark Mode: Off</button></div>
+    <div class="settings-item"><button id="toggleReady">Ready-State: Off</button></div>
+    <div class="settings-item"><button id="toggleImages">Hide Images</button></div>
+  </div>
   <div id="editor" contenteditable="true" spellcheck="false"></div>
-
   <div id="controls">
     <button id="zoomOut">A-</button>
     <button id="zoomIn">A+</button>
-  </div>
-  <div id="toggles">
-    <button id="toggleDark">Dark Mode: Off</button>
-    <button id="toggleReady">Ready-State: Off</button>
   </div>
   <div id="shortcuts"></div>
 
   <img src="pipi_new1.png" id="dog">
   <img src="jp.png" id="jpHead">
-  <button id="hideImages">✖</button>
 
   <script>
-    const editor = document.getElementById('editor');
     const body = document.body;
-    const zoomInBtn = document.getElementById('zoomIn');
-    const zoomOutBtn = document.getElementById('zoomOut');
+    const editor = document.getElementById('editor');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsMenu = document.getElementById('settingsMenu');
     const toggleDarkBtn = document.getElementById('toggleDark');
     const toggleReadyBtn = document.getElementById('toggleReady');
+    const toggleImagesBtn = document.getElementById('toggleImages');
+    const zoomInBtn = document.getElementById('zoomIn');
+    const zoomOutBtn = document.getElementById('zoomOut');
     const shortcuts = document.getElementById('shortcuts');
-    const RED_BG = '#ffecec';
-    const GREEN_BG = '#ecffec';
+    const dog = document.getElementById('dog');
+    const jpHead = document.getElementById('jpHead');
 
-    let fontSizeVW = 6;
     let darkMode = false;
     let readyEnabled = false;
+    let imagesVisible = true;
+    let fontSizeVW = 6;
+    const RED_BG = '#ffecec', GREEN_BG = '#ecffec';
 
-    function setFontSize() {
-      editor.style.fontSize = fontSizeVW + 'vw';
-    }
-
+    function setFontSize() { editor.style.fontSize = fontSizeVW + 'vw'; }
     function adjustFontSizeToFit() {
       while (editor.scrollHeight > editor.clientHeight && fontSizeVW > 2) {
-        fontSizeVW = Math.max(fontSizeVW - 0.5, 2);
-        setFontSize();
-      }
+        fontSizeVW = Math.max(fontSizeVW - 0.5, 2); setFontSize(); }
     }
-
     function updateShortcuts() {
-      let html = 'Enter: New Line &nbsp;|&nbsp; Ctrl+Backspace: Clear &nbsp;|&nbsp; Ctrl + (+) / Ctrl + (-): Zoom';
-      if (readyEnabled) html = 'Ctrl+Enter: Ready &nbsp;|&nbsp; ' + html;
+      let html = 'Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom';
+      if (readyEnabled) html = 'Ctrl+Enter: Ready | ' + html;
       shortcuts.innerHTML = html;
     }
+    // Initial
+    setFontSize(); updateShortcuts(); body.style.backgroundColor = '#ffffff';
 
-    // Initial setup
-    setFontSize();
-    updateShortcuts();
-    body.style.backgroundColor = '#ffffff';
-
-    // Zoom controls
-    zoomInBtn.addEventListener('click', () => {
-      fontSizeVW = Math.min(fontSizeVW + 1, 20);
-      setFontSize(); editor.focus();
-    });
-    zoomOutBtn.addEventListener('click', () => {
-      fontSizeVW = Math.max(fontSizeVW - 1, 2);
-      setFontSize(); editor.focus();
+    // Settings menu toggle
+    settingsBtn.addEventListener('click', () => {
+      settingsMenu.style.display = settingsMenu.style.display === 'flex' ? 'none' : 'flex';
     });
 
-    // Dark mode toggle
+    // Dark mode
     toggleDarkBtn.addEventListener('click', () => {
       darkMode = !darkMode;
-      if (darkMode) {
-        body.classList.add('dark-mode');
-        body.style.backgroundColor = '';
-      } else {
-        body.classList.remove('dark-mode');
-        body.style.backgroundColor = '#ffffff';
-      }
+      body.classList.toggle('dark-mode', darkMode);
       toggleDarkBtn.textContent = `Dark Mode: ${darkMode ? 'On' : 'Off'}`;
+      settingsMenu.style.display = 'none';
     });
 
-    // Ready-state toggle
+    // Ready-state
     toggleReadyBtn.addEventListener('click', () => {
       readyEnabled = !readyEnabled;
       toggleReadyBtn.textContent = `Ready-State: ${readyEnabled ? 'On' : 'Off'}`;
-      if (!readyEnabled) editor.parentElement.style.backgroundColor = '#ffffff';
+      if (!readyEnabled) body.style.backgroundColor = darkMode ? '' : '#ffffff';
       else if (!darkMode) body.style.backgroundColor = RED_BG;
-      updateShortcuts();
+      updateShortcuts(); settingsMenu.style.display = 'none';
     });
+
+    // Show/hide images
+    toggleImagesBtn.addEventListener('click', () => {
+      imagesVisible = !imagesVisible;
+      dog.style.display = jpHead.style.display = imagesVisible ? '' : 'none';
+      toggleImagesBtn.textContent = imagesVisible ? 'Hide Images' : 'Show Images';
+      settingsMenu.style.display = 'none';
+    });
+
+    // Zoom
+    zoomInBtn.addEventListener('click', () => { fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize(); editor.focus(); });
+    zoomOutBtn.addEventListener('click', () => { fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize(); editor.focus(); });
 
     // Typing behavior
     editor.addEventListener('input', () => {
-      if (readyEnabled && !darkMode) {
-        body.style.backgroundColor = RED_BG;
-        if (editor.scrollHeight > editor.clientHeight) adjustFontSizeToFit();
-      } else if (!darkMode) {
-        body.style.backgroundColor = '#ffffff';
-      }
+      if (readyEnabled && !darkMode) { body.style.backgroundColor = RED_BG; adjustFontSizeToFit(); }
+      else if (!darkMode) { body.style.backgroundColor = '#ffffff'; }
     });
-
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
       if (readyEnabled && !darkMode && e.ctrlKey && e.key === 'Enter') {
-        e.preventDefault();
-        body.style.backgroundColor = GREEN_BG;
-        editor.focus();
-      }
-      if (e.key === 'Enter') {}
+        e.preventDefault(); body.style.backgroundColor = GREEN_BG; editor.focus(); }
       if (e.ctrlKey && e.key === 'Backspace') {
-        e.preventDefault();
-        editor.focus();
-        document.execCommand('selectAll', false, null);
-        document.execCommand('delete', false, null);
+        e.preventDefault(); editor.focus(); document.execCommand('selectAll'); document.execCommand('delete');
         fontSizeVW = 6; setFontSize();
         if (!darkMode) body.style.backgroundColor = readyEnabled ? RED_BG : '#ffffff';
       }
-      if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
-        e.preventDefault(); fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize();
-      }
-      if (e.ctrlKey && e.key === '-') {
-        e.preventDefault(); fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize();
-      }
+      if (e.ctrlKey && (e.key === '+' || e.key === '=')) { e.preventDefault(); fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize(); }
+      if (e.ctrlKey && e.key === '-') { e.preventDefault(); fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize(); }
     });
 
-    window.onload = () => {
-      editor.focus();
-      document.getElementById('hideImages').addEventListener('click', () => {
-        document.getElementById('dog').style.display = 'none';
-        document.getElementById('jpHead').style.display = 'none';
-        document.getElementById('hideImages').style.display = 'none';
-      });
-    };
+    window.onload = () => { editor.focus(); };
   </script>
 </body>
 </html>
