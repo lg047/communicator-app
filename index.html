@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Open Graph tags for link previews -->
+  <!-- Open Graph tags -->
   <meta property="og:title" content="Tototype">
   <meta property="og:description" content="A simple speech interface for fast communication.">
   <meta property="og:image" content="https://postimg.cc/F1sD5n4P">
@@ -11,218 +11,117 @@
   <link rel="icon" href="/tototype_icon_new.png" type="image/png">
   <title>TotoType</title>
   <style>
-    html, body {
-      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-      background-color: #ffffff;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      transition: background-color 0.3s, color 0.3s;
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+      background-color:#ffffff; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+      transition:background-color 0.3s,color 0.3s;
     }
-    /* Dark mode base */
-    body.dark-mode { background-color: #000000 !important; color: #ffffff !important; }
-    /* Ensure editor text is white in dark mode */
-    body.dark-mode #editor { color: #ffffff !important; }
-
-    #editor {
-      width:100%; height:calc(100% - 80px); font-size:6vw; line-height:1.2;
+    body.dark-mode { background-color:#000000 !important; color:#ffffff !important; }
+    body.dark-mode #editor { color:#ffffff !important; }
+    #editor { width:100%; height:calc(100% - 80px); font-size:6vw; line-height:1.2;
       white-space:pre-wrap; overflow-wrap:break-word; word-break:break-word;
-      outline:none; padding:90px 200px; box-sizing:border-box;
-      color:inherit;
+      outline:none; padding:90px 200px; box-sizing:border-box; color:inherit;
     }
-    #topbar {
-      position:fixed; top:0; left:0; width:100%; height:80px;
-      background:transparent; display:flex; justify-content:flex-end; align-items:center;
-      padding:0 15px; box-sizing:border-box; z-index:1000;
+    #topbar { position:fixed; top:0; left:0; width:100%; height:80px;
+      display:flex; justify-content:flex-end; align-items:center; background:transparent;
+      padding:0 15px; z-index:1000;
     }
-    #settingsBtn {
-      background:none; border:none; font-size:4rem; cursor:pointer;
+    #settingsBtn { background:none; border:none; font-size:4rem; cursor:pointer;
       color:#888; padding:0 10px;
     }
-    #settingsMenu {
-      position:fixed; top:80px; right:10px; background:rgba(255,255,255,0.9);
-      border:1px solid #ccc; border-radius:4px; display:none; flex-direction:column;
-      padding:10px; box-shadow:0 2px 5px rgba(0,0,0,0.2); z-index:1001;
+    #settingsMenu { position:fixed; top:80px; right:10px;
+      background:rgba(255,255,255,0.9); border:1px solid #ccc; border-radius:4px;
+      display:none; flex-direction:column; padding:10px; box-shadow:0 2px 5px rgba(0,0,0,0.2);
+      z-index:1001;
     }
     body.dark-mode #settingsMenu { background:rgba(0,0,0,0.9); border-color:#444; }
-    .settings-item {
-      display:flex; align-items:center; justify-content:space-between;
-      margin:8px 0; width:180px;
+    .settings-item { display:flex; align-items:center; justify-content:space-between;
+      margin:8px 0; width:200px;
     }
     .switch { position:relative; display:inline-block; width:50px; height:24px; }
     .switch input { opacity:0; width:0; height:0; }
-    .slider {
-      position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0;
+    .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0;
       background-color:#ccc; transition:.4s; border-radius:24px;
     }
-    .slider:before {
-      position:absolute; content:""; height:18px; width:18px;
+    .slider:before { position:absolute; content:""; height:18px; width:18px;
       left:3px; bottom:3px; background-color:white; transition:.4s; border-radius:50%;
     }
     input:checked + .slider { background-color:#2196F3; }
     input:checked + .slider:before { transform:translateX(26px); }
     .switch-label { font-size:0.9rem; color:inherit; }
-
-    #controls {
-      position:fixed; bottom:10px; right:10px;
+    #doneBtn { margin-top:10px; width:100%; padding:6px; font-size:0.9rem;
+      background:none; border:1px solid #888; border-radius:3px; cursor:pointer; color:inherit;
+    }
+    #controls { position:fixed; bottom:10px; right:10px;
       background:rgba(255,255,255,0.7); padding:5px; border-radius:5px;
       display:flex; gap:5px; z-index:1000;
     }
     body.dark-mode #controls { background:rgba(0,0,0,0.7); }
-    #controls button {
-      font-size:1rem; padding:0.2em 0.5em; border:none;
-      border-radius:3px; cursor:pointer; background:none; color:inherit;
+    #controls button { font-size:1rem; padding:0.2em 0.5em;
+      border:none; border-radius:3px; background:none; color:inherit; cursor:pointer;
     }
-
-    #shortcuts {
-      position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
+    #shortcuts { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
       background:rgba(255,255,255,0.6); padding:4px 6px; border-radius:4px;
-      font-size:0.8rem; color:#333333; pointer-events:none; z-index:1000;
+      font-size:0.8rem; color:#333; pointer-events:none; z-index:1000;
     }
     body.dark-mode #shortcuts { background:rgba(0,0,0,0.6); color:#ddd; }
-
     #dog, #jpHead { position:fixed; bottom:0; pointer-events:none; height:240px; }
-    #jpHead { right:0; height:225px; z-index:999; }
+    #jpHead { right:0; height:225px; }
   </style>
 </head>
 <body>
-  <div id="topbar">
-    <button id="settingsBtn">⚙</button>
-  </div>
+  <div id="topbar"><button id="settingsBtn">⚙</button></div>
   <div id="settingsMenu">
     <div class="settings-item">
       <span class="switch-label">Dark Mode</span>
-      <label class="switch">
-        <input type="checkbox" id="darkSwitch">
-        <span class="slider"></span>
-      </label>
+      <label class="switch"><input type="checkbox" id="darkSwitch"><span class="slider"></span></label>
     </div>
     <div class="settings-item">
       <span class="switch-label">Cue Mode</span>
-      <label class="switch">
-        <input type="checkbox" id="readySwitch">
-        <span class="slider"></span>
-      </label>
+      <label class="switch"><input type="checkbox" id="readySwitch"><span class="slider"></span></label>
     </div>
     <div class="settings-item">
       <span class="switch-label">Show Images</span>
-      <label class="switch">
-        <input type="checkbox" id="imagesSwitch" checked>
-        <span class="slider"></span>
-      </label>
+      <label class="switch"><input type="checkbox" id="imagesSwitch" checked><span class="slider"></span></label>
     </div>
+    <button id="doneBtn">Done</button>
   </div>
   <div id="editor" contenteditable="true" spellcheck="false"></div>
-  <div id="controls">
-    <button id="zoomOut">A-</button>
-    <button id="zoomIn">A+</button>
-  </div>
+  <div id="controls"><button id="zoomOut">A-</button><button id="zoomIn">A+</button></div>
   <div id="shortcuts"></div>
-  <img src="pipi_new1.png" id="dog">
-  <img src="jp.png" id="jpHead">
+  <img src="pipi_new1.png" id="dog"><img src="jp.png" id="jpHead">
   <script>
-    const body = document.body;
-    const editor = document.getElementById('editor');
-    const settingsBtn = document.getElementById('settingsBtn');
-    const settingsMenu = document.getElementById('settingsMenu');
-    const darkSwitch = document.getElementById('darkSwitch');
-    const readySwitch = document.getElementById('readySwitch');
-    const imagesSwitch = document.getElementById('imagesSwitch');
-    const zoomInBtn = document.getElementById('zoomIn');
-    const zoomOutBtn = document.getElementById('zoomOut');
-    const shortcuts = document.getElementById('shortcuts');
-    const dog = document.getElementById('dog');
-    const jpHead = document.getElementById('jpHead');
+    const body=document.body,editor=document.getElementById('editor');
+    const settingsBtn=document.getElementById('settingsBtn'),settingsMenu=document.getElementById('settingsMenu');
+    const darkSwitch=document.getElementById('darkSwitch'),readySwitch=document.getElementById('readySwitch');
+    const imagesSwitch=document.getElementById('imagesSwitch'),doneBtn=document.getElementById('doneBtn');
+    const zoomInBtn=document.getElementById('zoomIn'),zoomOutBtn=document.getElementById('zoomOut');
+    const shortcuts=document.getElementById('shortcuts'),dog=document.getElementById('dog'),jpHead=document.getElementById('jpHead');
 
-    let fontSizeVW = 6;
-    const RED_BG = '#ffecec', GREEN_BG = '#ecffec';
-    const DARK_RED_BG = '#330000', DARK_GREEN_BG = '#003300';
+    let fontSizeVW=6;
+    const RED_BG='#ffecec',GREEN_BG='#ecffec';
+    const DARK_RED_BG='#330000',DARK_GREEN_BG='#003300';
 
-    function setFontSize() { editor.style.fontSize = fontSizeVW + 'vw'; }
-    function adjustFontSizeToFit() {
-      while (editor.scrollHeight > editor.clientHeight && fontSizeVW > 2) {
-        fontSizeVW = Math.max(fontSizeVW - 0.5, 2); setFontSize(); }
-    }
-    function updateTextColor() {
-      if (darkSwitch.checked) editor.style.color = '#ffffff';
-      else editor.style.color = '';
-    }
-    function updateShortcuts() {
-      let html = 'Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom';
-      if (readySwitch.checked) html = 'Ctrl+Enter: Cue | ' + html;
-      shortcuts.innerHTML = html;
-    }
+    function setFontSize(){editor.style.fontSize=fontSizeVW+'vw';}
+    function adjustFontSizeToFit(){while(editor.scrollHeight>editor.clientHeight&&fontSizeVW>2){fontSizeVW=Math.max(fontSizeVW-0.5,2);setFontSize();}}
+    function updateTextColor(){editor.style.color=darkSwitch.checked?'#ffffff':'';}
+    function updateShortcuts(){let html='Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom';if(readySwitch.checked)html='Ctrl+Enter: Cue | '+html;shortcuts.innerHTML=html;}
 
-    // Initial setup
-    setFontSize(); updateShortcuts(); updateTextColor(); body.style.backgroundColor = '#ffffff';
-    settingsMenu.style.display = 'none';
+    function resetSettings(){darkSwitch.checked=false;readySwitch.checked=false;imagesSwitch.checked=true;body.classList.remove('dark-mode');body.style.backgroundColor='#ffffff';updateTextColor();updateShortcuts();dog.style.display=jpHead.style.display='';settingsMenu.style.display='none';}
 
-    // Toggle settings menu
-    settingsBtn.addEventListener('click', () => {
-      settingsMenu.style.display = settingsMenu.style.display === 'flex' ? 'none' : 'flex';
-    });
+    // Init
+    setFontSize();resetSettings();
 
-    // Dark mode switch
-    darkSwitch.addEventListener('change', () => {
-      if (darkSwitch.checked) {
-        body.classList.add('dark-mode');
-        body.style.backgroundColor = readySwitch.checked ? DARK_RED_BG : '#000000';
-      } else {
-        body.classList.remove('dark-mode');
-        body.style.backgroundColor = readySwitch.checked ? RED_BG : '#ffffff';
-      }
-      updateTextColor(); updateShortcuts();
-    });
+    settingsBtn.addEventListener('click',()=>settingsMenu.style.display=settingsMenu.style.display==='flex'?'none':'flex');
+    doneBtn.addEventListener('click',()=>settingsMenu.style.display='none');
 
-    // Cue mode switch
-    readySwitch.addEventListener('change', () => {
-      if (readySwitch.checked) {
-        body.style.backgroundColor = darkSwitch.checked ? DARK_RED_BG : RED_BG;
-      } else {
-        body.style.backgroundColor = darkSwitch.checked ? '#000000' : '#ffffff';
-      }
-      updateShortcuts();
-    });
-
-    // Images switch
-    imagesSwitch.addEventListener('change', () => {
-      const visible = imagesSwitch.checked;
-      dog.style.display = jpHead.style.display = visible ? '' : 'none';
-    });
-
-    // Zoom controls
-    zoomInBtn.addEventListener('click', () => { fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize(); editor.focus(); });
-    zoomOutBtn.addEventListener('click', () => { fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize(); editor.focus(); });
-
-    // Typing behavior
-    editor.addEventListener('input', () => {
-      if (readySwitch.checked) {
-        body.style.backgroundColor = darkSwitch.checked ? DARK_RED_BG : RED_BG;
-        adjustFontSizeToFit();
-      } else {
-        body.style.backgroundColor = darkSwitch.checked ? '#000000' : '#ffffff';
-      }
-    });
-
-    // Ctrl+Enter for Cue
-    document.addEventListener('keydown', e => {
-      if (readySwitch.checked && e.ctrlKey && e.key === 'Enter') {
-        e.preventDefault();
-        body.style.backgroundColor = darkSwitch.checked ? DARK_GREEN_BG : GREEN_BG;
-        editor.focus();
-      }
-      if (e.ctrlKey && e.key === 'Backspace') {
-        e.preventDefault(); editor.focus(); document.execCommand('selectAll'); document.execCommand('delete');
-        fontSizeVW = 6; setFontSize();
-        if (readySwitch.checked) {
-          body.style.backgroundColor = darkSwitch.checked ? DARK_RED_BG : RED_BG;
-        } else {
-          body.style.backgroundColor = darkSwitch.checked ? '#000000' : '#ffffff';
-        }
-      }
-      if (e.ctrlKey && (e.key === '+' || e.key === '=')) { e.preventDefault(); fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize(); }
-      if (e.ctrlKey && e.key === '-') { e.preventDefault(); fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize(); }
-    });
-
-    window.onload = () => { editor.focus(); };
+    darkSwitch.addEventListener('change',()=>{if(darkSwitch.checked){body.classList.add('dark-mode');body.style.backgroundColor=readySwitch.checked?DARK_RED_BG:'#000000';}else{body.classList.remove('dark-mode');body.style.backgroundColor=readySwitch.checked?RED_BG:'#ffffff';}updateTextColor();updateShortcuts();});
+    readySwitch.addEventListener('change',()=>{if(readySwitch.checked){body.style.backgroundColor=darkSwitch.checked?DARK_RED_BG:RED_BG;}else{body.style.backgroundColor=darkSwitch.checked?'#000000':'#ffffff';}updateShortcuts();});
+    imagesSwitch.addEventListener('change',()=>{const v=imagesSwitch.checked;dog.style.display=jpHead.style.display=v?'':'none';});
+    zoomInBtn.addEventListener('click',()=>{fontSizeVW=Math.min(fontSizeVW+1,20);setFontSize();editor.focus();});
+    zoomOutBtn.addEventListener('click',()=>{fontSizeVW=Math.max(fontSizeVW-1,2);setFontSize();editor.focus();});
+    editor.addEventListener('input',()=>{if(readySwitch.checked){body.style.backgroundColor=darkSwitch.checked?DARK_RED_BG:RED_BG;adjustFontSizeToFit();}else{body.style.backgroundColor=darkSwitch.checked?'#000000':'#ffffff';}});
+    document.addEventListener('keydown',e=>{if(readySwitch.checked&&e.ctrlKey&&e.key==='Enter'){e.preventDefault();body.style.backgroundColor=darkSwitch.checked?DARK_GREEN_BG:GREEN_BG;editor.focus();}if(e.ctrlKey&&e.key==='Backspace'){e.preventDefault();editor.focus();document.execCommand('selectAll');document.execCommand('delete');fontSizeVW=6;setFontSize();if(readySwitch.checked){body.style.backgroundColor=darkSwitch.checked?DARK_RED_BG:RED_BG;}else{body.style.backgroundColor=darkSwitch.checked?'#000000':'#ffffff';}}if(e.ctrlKey&&(e.key==='+'||e.key==='=')){e.preventDefault();fontSizeVW=Math.min(fontSizeVW+1,20);setFontSize();}if(e.ctrlKey&&e.key==='-'){e.preventDefault();fontSizeVW=Math.max(fontSizeVW-1,2);setFontSize();}});
+    window.onload=()=>{editor.focus();resetSettings();};
   </script>
 </body>
 </html>
