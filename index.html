@@ -15,22 +15,24 @@
   <style>
     html, body {
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-      background-color: #ffecec; /* light red while typing */
+      background-color: #ffffff; /* default white */
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background-color: #000000;
+      color: #ffffff;
     }
     #editor {
       width: 100%;
-      /* reserve space below for controls and shortcuts */
-      height: calc(100% - 60px);
-      font-size: 6vw; line-height: 1.2;  /* default 2 sizes smaller */
-      white-space: pre-wrap; /* preserves wrapping */
-      overflow-wrap: break-word; word-break: break-word;
+      height: calc(100% - 90px); /* adjust for controls height */
+      font-size: 6vw; line-height: 1.2;
+      white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
       outline: none; padding: 90px 200px; box-sizing: border-box;
-      color: #000000;
-      color: #000000;
+      color: inherit;
     }
     #controls {
-      position: fixed; bottom: 10px; right: 10px;
+      position: fixed; bottom: 40px; right: 10px;
       background: rgba(255,255,255,0.7); padding: 5px; border-radius: 5px;
       display: flex; gap: 5px; z-index: 1000;
     }
@@ -38,70 +40,70 @@
       font-size: 1rem; padding: 0.2em 0.5em; border: none;
       border-radius: 3px; cursor: pointer;
     }
+    #toggles {
+      position: fixed; bottom: 40px; left: 10px;
+      display: flex; gap: 5px; z-index: 1000;
+    }
+    #toggles button {
+      font-size: 0.9rem; padding: 0.3em 0.6em; border: none;
+      border-radius: 3px; cursor: pointer;
+      background: rgba(255,255,255,0.7);
+    }
     #shortcuts {
       position: fixed; bottom: 10px; left: 50%;
-      transform: translateX(-50%); background: rgba(255,255,255,0.6); padding: 4px 6px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.6); padding: 4px 6px;
       border-radius: 4px; font-size: 0.8rem; color: #333333;
       pointer-events: none; z-index: 1000;
     }
-    #dog {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      height: 240px;  /* adjust as needed */
-      pointer-events: none;
+    #dog, #jpHead {
+      position: fixed; bottom: 0; pointer-events: none;
+      height: 240px;
     }
-    #jpHead {
-      position: fixed;
-      bottom: 0;
-      right: 0;
-      height: 225px;  /* adjust as needed */
-      z-index: 999;
-      pointer-events: none;
-    }
+    #jpHead { right: 0; height: 225px; z-index: 999; }
     #hideImages {
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      z-index: 1001;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      border: none;
-      border-radius: 3px;
-      padding: 4px 8px;
-      font-size: 0.8rem;
-      cursor: pointer;
-}
-
-}
-
-    
+      position: fixed; bottom: 10px; left: 10px; z-index: 1001;
+      background: rgba(0,0,0,0.7); color: white; border: none;
+      border-radius: 3px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div id="editor" contenteditable="true" spellcheck="false"></div>
+
   <div id="controls">
     <button id="zoomOut">A-</button>
     <button id="zoomIn">A+</button>
   </div>
-  <div id="shortcuts">
-    Ctrl+Enter: Ready &nbsp;|&nbsp; Enter: New Line &nbsp;|&nbsp; Ctrl+Backspace: Clear &nbsp;|&nbsp; Ctrl + (+) / Ctrl + (-): Zoom
+  <div id="toggles">
+    <button id="toggleDark">Dark Mode: Off</button>
+    <button id="toggleReady">Ready-State: Off</button>
   </div>
+  <div id="shortcuts"></div>
+
+  <img src="pipi_new1.png" id="dog">
+  <img src="jp.png" id="jpHead">
+  <button id="hideImages">✖</button>
+
   <script>
     const editor = document.getElementById('editor');
     const body = document.body;
     const zoomInBtn = document.getElementById('zoomIn');
     const zoomOutBtn = document.getElementById('zoomOut');
+    const toggleDarkBtn = document.getElementById('toggleDark');
+    const toggleReadyBtn = document.getElementById('toggleReady');
+    const shortcuts = document.getElementById('shortcuts');
     const RED_BG = '#ffecec';
     const GREEN_BG = '#ecffec';
-    let fontSizeVW = 6;  // two sizes smaller default
 
-    // Apply font size to editor
+    let fontSizeVW = 6;
+    let darkMode = false;
+    let readyEnabled = false;
+
     function setFontSize() {
       editor.style.fontSize = fontSizeVW + 'vw';
     }
 
-    // Shrink font until content fits
     function adjustFontSizeToFit() {
       while (editor.scrollHeight > editor.clientHeight && fontSizeVW > 2) {
         fontSizeVW = Math.max(fontSizeVW - 0.5, 2);
@@ -109,82 +111,101 @@
       }
     }
 
-    // Initialize
-    setFontSize();
+    function updateBackground(color) {
+      if (!darkMode) body.style.backgroundColor = color;
+    }
 
-    // Manual zoom controls
+    function updateShortcuts() {
+      let html = 'Enter: New Line &nbsp;|&nbsp; Ctrl+Backspace: Clear &nbsp;|&nbsp; Ctrl + (+) / Ctrl + (-): Zoom';
+      if (readyEnabled) {
+        html = 'Ctrl+Enter: Ready &nbsp;|&nbsp; ' + html;
+      }
+      shortcuts.innerHTML = html;
+    }
+
+    // Initial setup
+    setFontSize();
+    updateShortcuts();
+    updateBackground('#ffffff');
+
+    // Zoom controls
     zoomInBtn.addEventListener('click', () => {
       fontSizeVW = Math.min(fontSizeVW + 1, 20);
-      setFontSize();
-      editor.focus();
+      setFontSize(); editor.focus();
     });
     zoomOutBtn.addEventListener('click', () => {
       fontSizeVW = Math.max(fontSizeVW - 1, 2);
-      setFontSize();
-      editor.focus();
+      setFontSize(); editor.focus();
     });
 
-    // Handle typing: background reset and auto-shrink on overflow
+    // Dark mode toggle
+    toggleDarkBtn.addEventListener('click', () => {
+      darkMode = !darkMode;
+      body.classList.toggle('dark-mode', darkMode);
+      toggleDarkBtn.textContent = `Dark Mode: ${darkMode ? 'On' : 'Off'}`;
+      // ensure background correctness
+      if (!readyEnabled) updateBackground(darkMode ? '' : '#ffffff');
+    });
+
+    // Ready-state toggle
+    toggleReadyBtn.addEventListener('click', () => {
+      readyEnabled = !readyEnabled;
+      toggleReadyBtn.textContent = `Ready-State: ${readyEnabled ? 'On' : 'Off'}`;
+      // reset background and shortcuts
+      if (!readyEnabled) {
+        updateBackground('#ffffff');
+      } else {
+        updateBackground(RED_BG);
+      }
+      updateShortcuts();
+    });
+
+    // Typing behavior
     editor.addEventListener('input', () => {
-      body.style.backgroundColor = RED_BG;
-      if (editor.scrollHeight > editor.clientHeight) {
-        adjustFontSizeToFit();
+      if (readyEnabled) {
+        updateBackground(RED_BG);
+        if (editor.scrollHeight > editor.clientHeight) adjustFontSizeToFit();
+      } else {
+        updateBackground('#ffffff');
       }
     });
 
     document.addEventListener('keydown', (e) => {
-      // Ctrl+Enter -> Ready state (light green)
-      if (e.ctrlKey && e.key === 'Enter') {
+      if (readyEnabled && e.ctrlKey && e.key === 'Enter') {
         e.preventDefault();
-        body.style.backgroundColor = GREEN_BG;
+        updateBackground(GREEN_BG);
         editor.focus();
       }
-      // Enter without Ctrl -> allow newline
-      else if (e.key === 'Enter') {
-        // Default behavior: newline in contenteditable
+      if (e.key === 'Enter') {
+        // allow newline
       }
-      // Ctrl+Backspace -> Clear text, reset font size, and return to typing background
       if (e.ctrlKey && e.key === 'Backspace') {
         e.preventDefault();
         editor.focus();
         document.execCommand('selectAll', false, null);
         document.execCommand('delete', false, null);
-        // Reset font size to default
-        fontSizeVW = 6;
-        setFontSize();
-        body.style.backgroundColor = RED_BG;
+        fontSizeVW = 6; setFontSize();
+        updateBackground(readyEnabled ? RED_BG : '#ffffff');
       }
-      // Zoom in via keyboard
       if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
         e.preventDefault();
-        fontSizeVW = Math.min(fontSizeVW + 1, 20);
-        setFontSize();
+        fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize();
       }
-      // Zoom out via keyboard
       if (e.ctrlKey && e.key === '-') {
         e.preventDefault();
-        fontSizeVW = Math.max(fontSizeVW - 1, 2);
-        setFontSize();
+        fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize();
       }
     });
 
-    // Focus on load
-
     window.onload = () => {
-    editor.focus();
-    const hideBtn = document.getElementById('hideImages');
-    hideBtn.addEventListener('click', () => {
-    document.getElementById('dog').style.display = 'none';
-    document.getElementById('jpHead').style.display = 'none';
-    hideBtn.style.display = 'none'; // <-- this is the line in question
-  });
-};
-
-
-
+      editor.focus();
+      const hideBtn = document.getElementById('hideImages');
+      hideBtn.addEventListener('click', () => {
+        document.getElementById('dog').style.display = 'none';
+        document.getElementById('jpHead').style.display = 'none';
+        hideBtn.style.display = 'none';
+      });
+    };
   </script>
-  <img src="pipi_new1.png" id="dog">
-  <img src="jp.png" id="jpHead">
-  <button id="hideImages">✖</button>
 </body>
 </html>
