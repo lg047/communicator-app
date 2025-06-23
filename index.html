@@ -20,8 +20,8 @@
       transition: background-color 0.3s, color 0.3s;
     }
     body.dark-mode {
-      background-color: #000000;
-      color: #ffffff;
+      background-color: #000000 !important;
+      color: #ffffff !important;
     }
     #editor {
       width: 100%;
@@ -36,9 +36,14 @@
       background: rgba(255,255,255,0.7); padding: 5px; border-radius: 5px;
       display: flex; gap: 5px; z-index: 1000;
     }
+    body.dark-mode #controls {
+      background: rgba(0,0,0,0.7);
+    }
     #controls button {
       font-size: 1rem; padding: 0.2em 0.5em; border: none;
       border-radius: 3px; cursor: pointer;
+      background: none;
+      color: inherit;
     }
     #toggles {
       position: fixed; bottom: 40px; left: 10px;
@@ -48,6 +53,11 @@
       font-size: 0.9rem; padding: 0.3em 0.6em; border: none;
       border-radius: 3px; cursor: pointer;
       background: rgba(255,255,255,0.7);
+      color: #000;
+    }
+    body.dark-mode #toggles button {
+      background: rgba(0,0,0,0.7);
+      color: #fff;
     }
     #shortcuts {
       position: fixed; bottom: 10px; left: 50%;
@@ -55,6 +65,10 @@
       background: rgba(255,255,255,0.6); padding: 4px 6px;
       border-radius: 4px; font-size: 0.8rem; color: #333333;
       pointer-events: none; z-index: 1000;
+    }
+    body.dark-mode #shortcuts {
+      background: rgba(0,0,0,0.6);
+      color: #ddd;
     }
     #dog, #jpHead {
       position: fixed; bottom: 0; pointer-events: none;
@@ -111,22 +125,16 @@
       }
     }
 
-    function updateBackground(color) {
-      if (!darkMode) body.style.backgroundColor = color;
-    }
-
     function updateShortcuts() {
       let html = 'Enter: New Line &nbsp;|&nbsp; Ctrl+Backspace: Clear &nbsp;|&nbsp; Ctrl + (+) / Ctrl + (-): Zoom';
-      if (readyEnabled) {
-        html = 'Ctrl+Enter: Ready &nbsp;|&nbsp; ' + html;
-      }
+      if (readyEnabled) html = 'Ctrl+Enter: Ready &nbsp;|&nbsp; ' + html;
       shortcuts.innerHTML = html;
     }
 
     // Initial setup
     setFontSize();
     updateShortcuts();
-    updateBackground('#ffffff');
+    body.style.backgroundColor = '#ffffff';
 
     // Zoom controls
     zoomInBtn.addEventListener('click', () => {
@@ -141,69 +149,64 @@
     // Dark mode toggle
     toggleDarkBtn.addEventListener('click', () => {
       darkMode = !darkMode;
-      body.classList.toggle('dark-mode', darkMode);
+      if (darkMode) {
+        body.classList.add('dark-mode');
+        body.style.backgroundColor = '';
+      } else {
+        body.classList.remove('dark-mode');
+        body.style.backgroundColor = '#ffffff';
+      }
       toggleDarkBtn.textContent = `Dark Mode: ${darkMode ? 'On' : 'Off'}`;
-      // ensure background correctness
-      if (!readyEnabled) updateBackground(darkMode ? '' : '#ffffff');
     });
 
     // Ready-state toggle
     toggleReadyBtn.addEventListener('click', () => {
       readyEnabled = !readyEnabled;
       toggleReadyBtn.textContent = `Ready-State: ${readyEnabled ? 'On' : 'Off'}`;
-      // reset background and shortcuts
-      if (!readyEnabled) {
-        updateBackground('#ffffff');
-      } else {
-        updateBackground(RED_BG);
-      }
+      if (!readyEnabled) editor.parentElement.style.backgroundColor = '#ffffff';
+      else if (!darkMode) body.style.backgroundColor = RED_BG;
       updateShortcuts();
     });
 
     // Typing behavior
     editor.addEventListener('input', () => {
-      if (readyEnabled) {
-        updateBackground(RED_BG);
+      if (readyEnabled && !darkMode) {
+        body.style.backgroundColor = RED_BG;
         if (editor.scrollHeight > editor.clientHeight) adjustFontSizeToFit();
-      } else {
-        updateBackground('#ffffff');
+      } else if (!darkMode) {
+        body.style.backgroundColor = '#ffffff';
       }
     });
 
     document.addEventListener('keydown', (e) => {
-      if (readyEnabled && e.ctrlKey && e.key === 'Enter') {
+      if (readyEnabled && !darkMode && e.ctrlKey && e.key === 'Enter') {
         e.preventDefault();
-        updateBackground(GREEN_BG);
+        body.style.backgroundColor = GREEN_BG;
         editor.focus();
       }
-      if (e.key === 'Enter') {
-        // allow newline
-      }
+      if (e.key === 'Enter') {}
       if (e.ctrlKey && e.key === 'Backspace') {
         e.preventDefault();
         editor.focus();
         document.execCommand('selectAll', false, null);
         document.execCommand('delete', false, null);
         fontSizeVW = 6; setFontSize();
-        updateBackground(readyEnabled ? RED_BG : '#ffffff');
+        if (!darkMode) body.style.backgroundColor = readyEnabled ? RED_BG : '#ffffff';
       }
       if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
-        e.preventDefault();
-        fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize();
+        e.preventDefault(); fontSizeVW = Math.min(fontSizeVW + 1, 20); setFontSize();
       }
       if (e.ctrlKey && e.key === '-') {
-        e.preventDefault();
-        fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize();
+        e.preventDefault(); fontSizeVW = Math.max(fontSizeVW - 1, 2); setFontSize();
       }
     });
 
     window.onload = () => {
       editor.focus();
-      const hideBtn = document.getElementById('hideImages');
-      hideBtn.addEventListener('click', () => {
+      document.getElementById('hideImages').addEventListener('click', () => {
         document.getElementById('dog').style.display = 'none';
         document.getElementById('jpHead').style.display = 'none';
-        hideBtn.style.display = 'none';
+        document.getElementById('hideImages').style.display = 'none';
       });
     };
   </script>
