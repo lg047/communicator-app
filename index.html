@@ -17,16 +17,24 @@
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       transition: background-color 0.3s, color 0.3s;
     }
+    /* Dark mode base */
     body.dark-mode { background-color: #000000 !important; color: #ffffff !important; }
-    #editor { width:100%; height:calc(100% - 80px); font-size:6vw; line-height:1.2;
+    /* Ensure editor text is white in dark mode */
+    body.dark-mode #editor { color: #ffffff !important; }
+
+    #editor {
+      width:100%; height:calc(100% - 80px); font-size:6vw; line-height:1.2;
       white-space:pre-wrap; overflow-wrap:break-word; word-break:break-word;
-      outline:none; padding:90px 200px; box-sizing:border-box; color:inherit;
+      outline:none; padding:90px 200px; box-sizing:border-box;
+      color:inherit;
     }
-    #topbar { position:fixed; top:0; left:0; width:100%; height:80px;
+    #topbar {
+      position:fixed; top:0; left:0; width:100%; height:80px;
       background:transparent; display:flex; justify-content:flex-end; align-items:center;
       padding:0 15px; box-sizing:border-box; z-index:1000;
     }
-    #settingsBtn { background:none; border:none; font-size:4rem; cursor:pointer;
+    #settingsBtn {
+      background:none; border:none; font-size:4rem; cursor:pointer;
       color:#888; padding:0 10px;
     }
     #settingsMenu {
@@ -35,33 +43,42 @@
       padding:10px; box-shadow:0 2px 5px rgba(0,0,0,0.2); z-index:1001;
     }
     body.dark-mode #settingsMenu { background:rgba(0,0,0,0.9); border-color:#444; }
-    .settings-item { display:flex; align-items:center;
-      justify-content:space-between; margin:8px 0; width:180px;
+    .settings-item {
+      display:flex; align-items:center; justify-content:space-between;
+      margin:8px 0; width:180px;
     }
     .switch { position:relative; display:inline-block; width:50px; height:24px; }
     .switch input { opacity:0; width:0; height:0; }
-    .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0;
+    .slider {
+      position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0;
       background-color:#ccc; transition:.4s; border-radius:24px;
     }
-    .slider:before { position:absolute; content:""; height:18px; width:18px;
+    .slider:before {
+      position:absolute; content:""; height:18px; width:18px;
       left:3px; bottom:3px; background-color:white; transition:.4s; border-radius:50%;
     }
     input:checked + .slider { background-color:#2196F3; }
     input:checked + .slider:before { transform:translateX(26px); }
     .switch-label { font-size:0.9rem; color:inherit; }
-    #controls { position:fixed; bottom:10px; right:10px;
+
+    #controls {
+      position:fixed; bottom:10px; right:10px;
       background:rgba(255,255,255,0.7); padding:5px; border-radius:5px;
       display:flex; gap:5px; z-index:1000;
     }
     body.dark-mode #controls { background:rgba(0,0,0,0.7); }
-    #controls button { font-size:1rem; padding:0.2em 0.5em;
-      border:none; border-radius:3px; cursor:pointer; background:none; color:inherit;
+    #controls button {
+      font-size:1rem; padding:0.2em 0.5em; border:none;
+      border-radius:3px; cursor:pointer; background:none; color:inherit;
     }
-    #shortcuts { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
+
+    #shortcuts {
+      position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
       background:rgba(255,255,255,0.6); padding:4px 6px; border-radius:4px;
       font-size:0.8rem; color:#333333; pointer-events:none; z-index:1000;
     }
     body.dark-mode #shortcuts { background:rgba(0,0,0,0.6); color:#ddd; }
+
     #dog, #jpHead { position:fixed; bottom:0; pointer-events:none; height:240px; }
     #jpHead { right:0; height:225px; z-index:999; }
   </style>
@@ -124,6 +141,10 @@
       while (editor.scrollHeight > editor.clientHeight && fontSizeVW > 2) {
         fontSizeVW = Math.max(fontSizeVW - 0.5, 2); setFontSize(); }
     }
+    function updateTextColor() {
+      if (darkSwitch.checked) editor.style.color = '#ffffff';
+      else editor.style.color = '';
+    }
     function updateShortcuts() {
       let html = 'Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom';
       if (readySwitch.checked) html = 'Ctrl+Enter: Cue | ' + html;
@@ -131,7 +152,7 @@
     }
 
     // Initial setup
-    setFontSize(); updateShortcuts(); body.style.backgroundColor = '#ffffff';
+    setFontSize(); updateShortcuts(); updateTextColor(); body.style.backgroundColor = '#ffffff';
     settingsMenu.style.display = 'none';
 
     // Toggle settings menu
@@ -148,7 +169,7 @@
         body.classList.remove('dark-mode');
         body.style.backgroundColor = readySwitch.checked ? RED_BG : '#ffffff';
       }
-      updateShortcuts();
+      updateTextColor(); updateShortcuts();
     });
 
     // Cue mode switch
