@@ -118,88 +118,92 @@
   </script>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB24IJIcEFqXpeiZiUPwLxRg51rbwObuAo",
-      authDomain: "tototype-8e5bf.firebaseapp.com",
-      projectId: "tototype-8e5bf",
-      storageBucket: "tototype-8e5bf.firebasestorage.app",
-      messagingSenderId: "905146064272",
-      appId: "1:905146064272:web:c329feeabfdb6eeefba715",
-      databaseURL: "https://tototype-8e5bf-default-rtdb.firebaseio.com/"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyB24IJIcEFqXpeiZiUPwLxRg51rbwObuAo",
+    authDomain: "tototype-8e5bf.firebaseapp.com",
+    projectId: "tototype-8e5bf",
+    storageBucket: "tototype-8e5bf.firebasestorage.app",
+    messagingSenderId: "905146064272",
+    appId: "1:905146064272:web:c329feeabfdb6eeefba715",
+    databaseURL: "REPLACE_ME"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    const editorEl = document.getElementById("editor");
-    const padRef = ref(db, "sharedPad/text");
+  const editorEl = document.getElementById("editor");
+  const padRef = ref(db, "sharedPad/text");
 
-    let applyingRemote = false;
-    let writeTimer = null;
+  let applyingRemote = false;
+  let writeTimer = null;
 
-    function getCaretOffset(el){
-      const sel = window.getSelection?.();
-      if (!sel || sel.rangeCount === 0) return null;
-      const range = sel.getRangeAt(0);
-      if (!el.contains(range.startContainer)) return null;
-      const pre = document.createRange();
-      pre.selectNodeContents(el);
-      pre.setEnd(range.startContainer, range.startOffset);
-      return pre.toString().length;
-    }
+  function getCaretOffset(el){
+    const sel = window.getSelection?.();
+    if (!sel || sel.rangeCount === 0) return null;
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.startContainer)) return null;
+    const pre = document.createRange();
+    pre.selectNodeContents(el);
+    pre.setEnd(range.startContainer, range.startOffset);
+    return pre.toString().length;
+  }
 
-    function setCaretOffset(el, offset){
-      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-      let node, count = 0;
-      while ((node = walker.nextNode())) {
-        const next = count + node.nodeValue.length;
-        if (offset <= next) {
-          const range = document.createRange();
-          range.setStart(node, Math.max(0, offset - count));
-          range.collapse(true);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
-          return;
-        }
-        count = next;
+  function setCaretOffset(el, offset){
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    let node, count = 0;
+    while ((node = walker.nextNode())) {
+      const next = count + node.nodeValue.length;
+      if (offset <= next) {
+        const range = document.createRange();
+        range.setStart(node, Math.max(0, offset - count));
+        range.collapse(true);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        return;
       }
+      count = next;
     }
+  }
 
-    onValue(padRef, (snap) => {
-      const remoteText = snap.val() ?? "";
-      const current = editorEl.innerText;
+  onValue(padRef, (snap) => {
+    const remoteText = snap.val() ?? "";
+    const current = editorEl.textContent ?? "";
 
-      if (remoteText === current) return;
+    if (remoteText === current) return;
 
-      const focused = (document.activeElement === editorEl);
-      const caret = focused ? getCaretOffset(editorEl) : null;
+    const focused = (document.activeElement === editorEl);
+    const caret = focused ? getCaretOffset(editorEl) : null;
 
-      applyingRemote = true;
-      editorEl.innerText = remoteText;
-      applyingRemote = false;
+    applyingRemote = true;
+    editorEl.textContent = remoteText;
+    applyingRemote = false;
 
-      if (focused && caret !== null) {
-        try { setCaretOffset(editorEl, Math.min(caret, editorEl.innerText.length)); } catch {}
+    if (focused && caret !== null) {
+      try {
+        const len = (editorEl.textContent ?? "").length;
+        setCaretOffset(editorEl, Math.min(caret, len));
+      } catch {}
+    }
+  });
+
+  editorEl.addEventListener("input", () => {
+    if (applyingRemote) return;
+    clearTimeout(writeTimer);
+    const text = editorEl.textContent ?? "";
+
+    writeTimer = setTimeout(async () => {
+      try {
+        await set(padRef, text);
+      } catch (e) {
+        console.error(e);
       }
-    });
+    }, 80);
+  });
+</script>
 
-    editorEl.addEventListener("input", () => {
-      if (applyingRemote) return;
-      clearTimeout(writeTimer);
-      const text = editorEl.innerText;
-
-      writeTimer = setTimeout(async () => {
-        try {
-          await set(padRef, text);
-        } catch (e) {
-          console.error(e);
-        }
-      }, 80);
-    });
-  </script>
 </body>
 </html>
