@@ -51,6 +51,7 @@
   <img src="jp.png" id="jpHead" alt="jp image">
   <audio id="pipiSound" src="pipi.wav" preload="auto"></audio>
   <audio id="jpSound" src="jp.wav" preload="auto"></audio>
+
   <script>
     // ---------- DOM refs ----------
     const body=document.body;
@@ -69,7 +70,7 @@
     const pipiAudio=document.getElementById('pipiSound');
     const jpAudio=document.getElementById('jpSound');
 
-    // ---------- Web Audio helpers ----------
+    // ---------- Web Audio helpers ----------
     const AudioContext=window.AudioContext||window.webkitAudioContext;
     let audioCtx; // lazily created on first interaction
     function ensureCtx(){if(!AudioContext)return null;if(!audioCtx)audioCtx=new AudioContext();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
@@ -108,12 +109,97 @@
 
     // ---------- Soundboard visuals ----------
     function pulse(el,audio){attachAnalyser(audio);if(!audio.analyser)return;const data=new Uint8Array(audio.analyser.frequencyBinCount);
-      function step(){if(audio.paused||audio.ended){el.style.transform='';return;}audio.analyser.getByteFrequencyData(data);let sum=0;for(let i=0;i<data.length;i++)sum+=data[i];const scale=1+(sum/data.length/255)*0.12;el.style.transform=`scale(${scale})`;requestAnimationFrame(step);}requestAnimationFrame(step);}  
+      function step(){if(audio.paused||audio.ended){el.style.transform='';return;}audio.analyser.getByteFrequencyData(data);let sum=0;for(let i=0;i<data.length;i++)sum+=data[i];const scale=1+(sum/data.length/255)*0.12;el.style.transform=`scale(${scale})`;requestAnimationFrame(step);}requestAnimationFrame(step);}
     function addSoundEvents(el,audio){el.addEventListener('pointerdown',()=>{el.classList.add('pressed');audio.currentTime=0;audio.play();pulse(el,audio);});el.addEventListener('pointerup',()=>el.classList.remove('pressed'));el.addEventListener('pointerleave',()=>el.classList.remove('pressed'));audio.addEventListener('ended',()=>{el.classList.remove('pressed');el.style.transform='';});}
     addSoundEvents(dog,pipiAudio);addSoundEvents(jpHead,jpAudio);
 
     // ---------- init ----------
     window.onload=()=>{editor.focus();resetSettings();setFontSize();};
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB24IJIcEFqXpeiZiUPwLxRg51rbwObuAo",
+      authDomain: "tototype-8e5bf.firebaseapp.com",
+      projectId: "tototype-8e5bf",
+      storageBucket: "tototype-8e5bf.firebasestorage.app",
+      messagingSenderId: "905146064272",
+      appId: "1:905146064272:web:c329feeabfdb6eeefba715",
+      databaseURL: "https://tototype-8e5bf-default-rtdb.firebaseio.com/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const editorEl = document.getElementById("editor");
+    const padRef = ref(db, "sharedPad/text");
+
+    let applyingRemote = false;
+    let writeTimer = null;
+
+    function getCaretOffset(el){
+      const sel = window.getSelection?.();
+      if (!sel || sel.rangeCount === 0) return null;
+      const range = sel.getRangeAt(0);
+      if (!el.contains(range.startContainer)) return null;
+      const pre = document.createRange();
+      pre.selectNodeContents(el);
+      pre.setEnd(range.startContainer, range.startOffset);
+      return pre.toString().length;
+    }
+
+    function setCaretOffset(el, offset){
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+      let node, count = 0;
+      while ((node = walker.nextNode())) {
+        const next = count + node.nodeValue.length;
+        if (offset <= next) {
+          const range = document.createRange();
+          range.setStart(node, Math.max(0, offset - count));
+          range.collapse(true);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
+        count = next;
+      }
+    }
+
+    onValue(padRef, (snap) => {
+      const remoteText = snap.val() ?? "";
+      const current = editorEl.innerText;
+
+      if (remoteText === current) return;
+
+      const focused = (document.activeElement === editorEl);
+      const caret = focused ? getCaretOffset(editorEl) : null;
+
+      applyingRemote = true;
+      editorEl.innerText = remoteText;
+      applyingRemote = false;
+
+      if (focused && caret !== null) {
+        try { setCaretOffset(editorEl, Math.min(caret, editorEl.innerText.length)); } catch {}
+      }
+    });
+
+    editorEl.addEventListener("input", () => {
+      if (applyingRemote) return;
+      clearTimeout(writeTimer);
+      const text = editorEl.innerText;
+
+      writeTimer = setTimeout(async () => {
+        try {
+          await set(padRef, text);
+        } catch (e) {
+          console.error(e);
+        }
+      }, 80);
+    });
   </script>
 </body>
 </html>
