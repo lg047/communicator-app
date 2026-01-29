@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- ✅ CRITICAL for iPhone sizing + media queries -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
   <meta property="og:title" content="TotoType" />
   <meta property="og:description" content="A simple speech interface for fast communication." />
   <meta property="og:image" content="https://postimg.cc/F1sD5n4P" />
@@ -130,31 +133,36 @@
     #jpHead{right:0;height:225px}
     #dog.pressed,#jpHead.pressed{filter:brightness(.8)}
 
-    /* ---------- Mobile / iOS UI: BIG CONTROLS, NOT BIG WHITESPACE ---------- */
+    /* ---------- Mobile / iOS UI: BIG CONTROLS, centered modal, no background typing ---------- */
     @media (max-width: 900px), (pointer: coarse) {
       /* Use mobile top bar instead of desktop gear */
       #settingsBtn{display:none;}
       #mobileTopBar{
         display:flex;
         top:calc(14px + env(safe-area-inset-top));
+        left:14px;
         right:14px;
+        justify-content:flex-end;
         gap:18px;
       }
 
+      /* Make them take ~50% of width combined (big thumb targets) */
+      #mobileClear{ width:34vw; }
+      #mobileGear{ width:16vw; }
+
       /* MASSIVE thumb buttons */
       .topBtn{
-        border-radius:34px;
-        padding:26px 34px;
-        font-size:2.4rem;      /* huge text */
-        min-height:96px;       /* huge tap target */
-        min-width:160px;
-        box-shadow:0 12px 30px rgba(0,0,0,.25);
+        border-radius:38px;
+        padding:28px 26px;
+        font-size:2.8rem;      /* BIG */
+        min-height:112px;      /* BIG tap target */
+        box-shadow:0 14px 34px rgba(0,0,0,.28);
       }
       #mobileGear{
-        min-width:96px;
-        min-height:96px;
-        padding:22px 24px;
-        font-size:2.8rem;      /* huge icon */
+        min-height:112px;
+        padding:22px 18px;
+        font-size:3.2rem;      /* BIG icon */
+        text-align:center;
       }
 
       /* Remove footer on mobile entirely */
@@ -163,33 +171,31 @@
 
       /* Leave room for the big top bar */
       #editor{
-        padding:160px 22px;
+        padding:170px 22px;
         height:100%;
       }
 
-      /* Settings modal: large, but tight (no giant empty space) */
+      /* Settings modal: vertically centered */
       #settingsMenu{
-        top:calc(130px + env(safe-area-inset-top));
         left:14px;
         right:14px;
+        top:50%;
+        transform:translateY(-50%);
         width:auto;
-        transform:none;
-        border-radius:30px;
 
-        /* IMPORTANT: keep padding modest so space goes to controls */
-        padding:16px 16px 14px;
-
-        /* allow it to grow if needed, but don't force full-screen */
-        max-height:calc(100vh - (180px + env(safe-area-inset-top) + env(safe-area-inset-bottom)));
-        overflow:auto;
+        border-radius:34px;
+        padding:18px 16px 16px; /* modest padding (no giant empty space) */
         box-shadow:0 18px 55px rgba(0,0,0,.35);
+
+        max-height:70vh;
+        overflow:auto;
       }
 
       /* Hide options you don't want on mobile */
       #cueItem{display:none !important;}
       #imagesItem{display:none !important;}
 
-      /* Make each row itself a BIG tap zone */
+      /* Make each row a BIG tap zone */
       .settings-item{
         margin:0;
         padding:18px 8px;
@@ -197,25 +203,25 @@
 
       /* HUGE labels */
       .switch-label{
-        font-size:2.6rem;   /* big, readable */
+        font-size:3.0rem;
         line-height:1.15;
       }
 
-      /* HUGE switches (track + knob) */
-      .switch{width:140px;height:72px}
-      .slider{border-radius:72px}
+      /* HUGE switches */
+      .switch{width:160px;height:82px}
+      .slider{border-radius:82px}
       .slider:before{
-        height:60px;width:60px;
+        height:70px;width:70px;
         left:6px;bottom:6px;
       }
-      input:checked + .slider:before{transform:translateX(58px)}
+      input:checked + .slider:before{transform:translateX(70px)}
 
-      /* HUGE Done button, directly after toggles (no auto bottom spacing) */
+      /* HUGE Done button */
       #doneBtn{
         margin-top:16px;
-        padding:22px 18px;
-        font-size:2.6rem;
-        border-radius:26px;
+        padding:26px 18px;
+        font-size:3.0rem;
+        border-radius:30px;
         border-width:2px;
       }
     }
@@ -234,7 +240,7 @@
 
   <div id="settingsOverlay"></div>
 
-  <div id="settingsMenu">
+  <div id="settingsMenu" aria-modal="true" role="dialog">
     <div class="settings-item" id="darkItem">
       <span class="switch-label">Dark Mode</span>
       <label class="switch"><input type="checkbox" id="darkSwitch"><span class="slider"></span></label>
@@ -260,11 +266,11 @@
 
   <div id="editor" contenteditable="true" spellcheck="false"></div>
 
-  <!-- Desktop footer controls (hidden on mobile via CSS) -->
+  <!-- Desktop footer controls (hidden on mobile) -->
   <div id="controls"><button id="zoomOut">A-</button><button id="zoomIn">A+</button></div>
   <div id="shortcuts"></div>
 
-  <!-- Media: DO NOT set src attributes here (prevents unwanted loads & fixes .src truthiness bug) -->
+  <!-- Media: DO NOT set src attributes here -->
   <img data-src="pipi_new1.png" loading="lazy" decoding="async" id="dog" alt="pipi image" style="display:none">
   <img data-src="jp.png" loading="lazy" decoding="async" id="jpHead" alt="jp image" style="display:none">
   <audio id="pipiSound" data-src="pipi.wav" preload="none"></audio>
@@ -348,7 +354,7 @@
       updateBg();
     }
 
-    // ---------- Media lazy-load (desktop only, and only when images ON) ----------
+    // ---------- Media lazy-load (desktop only) ----------
     let mediaLoaded = false;
     function loadMediaIfNeeded(){
       if (mediaLoaded) return;
@@ -381,7 +387,7 @@
       }
     }
 
-    // ---------- Soundboard visuals ----------
+    // ---------- Soundboard visuals (desktop only) ----------
     const AudioContext=window.AudioContext||window.webkitAudioContext;
     let audioCtx;
     function ensureCtx(){ if(!AudioContext) return null; if(!audioCtx) audioCtx = new AudioContext(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
@@ -424,7 +430,7 @@
     addSoundEvents(dog,pipiAudio);
     addSoundEvents(jpHead,jpAudio);
 
-    // ---------- Remote update hook (auto-fit + reset size on remote clear) ----------
+    // ---------- Remote update hook ----------
     window.TotoTypeUI = window.TotoTypeUI || {};
     window.TotoTypeUI.onRemoteTextApplied = (remoteText) => {
       const txt = (typeof remoteText === 'string') ? remoteText : editor.innerText;
@@ -454,17 +460,36 @@
       } else {
         saveSoloText(editor.innerText);
       }
-      editor.focus();
+      if (!isMobile) editor.focus();
+    }
+
+    // ---------- Disable typing while settings open ----------
+    let settingsOpen = false;
+    function setEditorInteractive(on){
+      if (on) {
+        editor.setAttribute('contenteditable','true');
+        editor.style.pointerEvents = 'auto';
+      } else {
+        editor.blur();
+        editor.setAttribute('contenteditable','false');
+        editor.style.pointerEvents = 'none';
+      }
     }
 
     // ---------- Settings open/close ----------
     function openSettings(){
+      settingsOpen = true;
+      setEditorInteractive(false);
       settingsMenu.style.display='flex';
       if (isMobile) settingsOverlay.style.display='block';
     }
     function closeSettings(){
+      settingsOpen = false;
       settingsMenu.style.display='none';
       settingsOverlay.style.display='none';
+      setEditorInteractive(true);
+      // Don’t auto-focus on mobile (prevents keyboard popping up)
+      if (!isMobile) editor.focus();
     }
 
     settingsBtn.addEventListener('click',()=>{
@@ -475,6 +500,13 @@
     });
     settingsOverlay.addEventListener('click', closeSettings);
     doneBtn.addEventListener('click', closeSettings);
+
+    // Prevent any stray taps from focusing editor when settings open
+    document.addEventListener('touchstart', (e)=>{
+      if (!settingsOpen) return;
+      const t = e.target;
+      if (t === editor) { e.preventDefault(); e.stopPropagation(); }
+    }, {passive:false});
 
     // ---------- Toggles ----------
     darkSwitch.addEventListener('change',()=>{
@@ -507,7 +539,7 @@
 
     shareSwitch.addEventListener('change', async ()=>{
       await setShareMode(shareSwitch.checked);
-      editor.focus();
+      if (!isMobile) editor.focus();
       refreshState();
     });
 
@@ -555,8 +587,6 @@
 
     // ---------- init ----------
     window.onload=()=>{
-      editor.focus();
-
       shareSwitch.checked = false;
 
       defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
@@ -574,6 +604,10 @@
       editor.innerText = loadSoloText();
       adjustFontSizeToFit();
       refreshState();
+
+      // Keep keyboard closed initially on mobile
+      if (isMobile) editor.blur();
+      else editor.focus();
     };
   </script>
 
