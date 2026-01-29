@@ -117,7 +117,6 @@
     window.onload=()=>{editor.focus();resetSettings();setFontSize();};
   </script>
 
-  <!-- Firebase Realtime Database sync -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
@@ -129,10 +128,7 @@
       storageBucket: "tototype-8e5bf.firebasestorage.app",
       messagingSenderId: "905146064272",
       appId: "1:905146064272:web:c329feeabfdb6eeefba715",
-
-      // FIX: You MUST replace this with your real Realtime Database URL from Firebase Console.
-      // Example format: https://<project>-default-rtdb.<region>.firebasedatabase.app
-      databaseURL: "REPLACE_ME"
+      databaseURL: "https://tototype-8e5bf-default-rtdb.firebaseio.com/"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -175,7 +171,7 @@
 
     onValue(padRef, (snap) => {
       const remoteText = snap.val() ?? "";
-      const current = editorEl.textContent ?? "";
+      const current = editorEl.innerText;
 
       if (remoteText === current) return;
 
@@ -183,30 +179,24 @@
       const caret = focused ? getCaretOffset(editorEl) : null;
 
       applyingRemote = true;
-      try {
-        editorEl.textContent = remoteText;
-      } finally {
-        applyingRemote = false;
-      }
+      editorEl.innerText = remoteText;
+      applyingRemote = false;
 
       if (focused && caret !== null) {
-        try {
-          const len = (editorEl.textContent ?? "").length;
-          setCaretOffset(editorEl, Math.min(caret, len));
-        } catch {}
+        try { setCaretOffset(editorEl, Math.min(caret, editorEl.innerText.length)); } catch {}
       }
     });
 
     editorEl.addEventListener("input", () => {
       if (applyingRemote) return;
       clearTimeout(writeTimer);
-      const text = editorEl.textContent ?? "";
+      const text = editorEl.innerText;
 
       writeTimer = setTimeout(async () => {
         try {
           await set(padRef, text);
         } catch (e) {
-          console.error("Firebase write failed:", e);
+          console.error(e);
         }
       }, 80);
     });
