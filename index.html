@@ -134,8 +134,6 @@
       #settingsBtn{display:none;}
       #mobileTopBar{display:flex;}
 
-      /* Bigger tap targets already handled by .topBtn */
-
       /* Remove footer on mobile entirely */
       #controls{display:none !important;}
       #shortcuts{display:none !important;}
@@ -206,9 +204,9 @@
   <div id="controls"><button id="zoomOut">A-</button><button id="zoomIn">A+</button></div>
   <div id="shortcuts"></div>
 
-  <!-- Media: prevent mobile from downloading by default (src empty; real URLs in data-src) -->
-  <img data-src="pipi_new1.png" src="" loading="lazy" decoding="async" id="dog" alt="pipi image" style="display:none">
-  <img data-src="jp.png" src="" loading="lazy" decoding="async" id="jpHead" alt="jp image" style="display:none">
+  <!-- Media: DO NOT set src attributes here (prevents unwanted loads & fixes .src truthiness bug) -->
+  <img data-src="pipi_new1.png" loading="lazy" decoding="async" id="dog" alt="pipi image" style="display:none">
+  <img data-src="jp.png" loading="lazy" decoding="async" id="jpHead" alt="jp image" style="display:none">
   <audio id="pipiSound" data-src="pipi.wav" preload="none"></audio>
   <audio id="jpSound" data-src="jp.wav" preload="none"></audio>
 
@@ -298,13 +296,12 @@
       if (mediaLoaded) return;
       mediaLoaded = true;
 
-      // Load images
-      if (dog && !dog.src) dog.src = dog.dataset.src || '';
-      if (jpHead && !jpHead.src) jpHead.src = jpHead.dataset.src || '';
+      // Use getAttribute('src') because element.src becomes truthy even when unset/empty.
+      if (dog && !dog.getAttribute('src')) dog.setAttribute('src', dog.dataset.src || '');
+      if (jpHead && !jpHead.getAttribute('src')) jpHead.setAttribute('src', jpHead.dataset.src || '');
 
-      // Load audio
-      if (pipiAudio && !pipiAudio.src) pipiAudio.src = pipiAudio.dataset.src || '';
-      if (jpAudio && !jpAudio.src) jpAudio.src = jpAudio.dataset.src || '';
+      if (pipiAudio && !pipiAudio.getAttribute('src')) pipiAudio.setAttribute('src', pipiAudio.dataset.src || '');
+      if (jpAudio && !jpAudio.getAttribute('src')) jpAudio.setAttribute('src', jpAudio.dataset.src || '');
     }
 
     function toggleImages(show){
@@ -329,12 +326,12 @@
       }
     }
 
-    // ---------- Soundboard visuals (only meaningful on desktop when images loaded) ----------
+    // ---------- Soundboard visuals ----------
     const AudioContext=window.AudioContext||window.webkitAudioContext;
     let audioCtx;
     function ensureCtx(){ if(!AudioContext) return null; if(!audioCtx) audioCtx = new AudioContext(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
     function attachAnalyser(el){
-      if(el.analyser || !ensureCtx() || !el.src) return;
+      if(el.analyser || !ensureCtx() || !el.getAttribute('src')) return;
       const src = audioCtx.createMediaElementSource(el);
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 256;
@@ -358,7 +355,7 @@
     }
     function addSoundEvents(el,audio){
       el.addEventListener('pointerdown',()=>{
-        if (isMobile) return;           // mobile skips media
+        if (isMobile) return;
         if (!imagesSwitch.checked) return;
         loadMediaIfNeeded();
         el.classList.add('pressed');
@@ -377,7 +374,7 @@
     window.TotoTypeUI.onRemoteTextApplied = (remoteText) => {
       const txt = (typeof remoteText === 'string') ? remoteText : editor.innerText;
       if (txt.trim() === '') {
-        fontSizeVW = defaultFontVW;  // device-specific default
+        fontSizeVW = defaultFontVW;
         setFontSize();
       }
       adjustFontSizeToFit();
@@ -386,10 +383,8 @@
 
     // ---------- Clear helpers ----------
     function clearEditorAndReset(){
-      // Clear editor contents
       document.execCommand('selectAll');
       document.execCommand('delete');
-      // Reset font size for THIS device
       fontSizeVW = defaultFontVW;
       setFontSize();
       refreshState();
@@ -398,7 +393,6 @@
     async function clearAndPropagate(){
       clearEditorAndReset();
       if (shareSwitch.checked) {
-        // Push empty text to Firebase so other viewers also clear + reset size
         if (window.FirebasePad?.setText) {
           try { await window.FirebasePad.setText(''); } catch {}
         }
@@ -469,7 +463,7 @@
       refreshState();
     });
 
-    // Desktop keyboard shortcuts (mobile doesn't have ctrl/cmd)
+    // Desktop keyboard shortcuts
     document.addEventListener('keydown',e=>{
       if (isMobile) return;
 
@@ -501,7 +495,7 @@
       zoomOutBtn.addEventListener('click',()=>{ fontSizeVW=Math.max(fontSizeVW-1,2); setFontSize(); editor.focus(); });
     }
 
-    // Mobile clear button (top bar) + also useful on desktop if shown (it isn't)
+    // Mobile clear button (top bar)
     mobileClear.addEventListener('click', clearAndPropagate);
 
     // ---------- init ----------
@@ -515,14 +509,13 @@
       fontSizeVW = defaultFontVW;
       setFontSize();
 
-      // Desktop should load with images ON by default
-      // Mobile should skip media entirely + images off
+      // Desktop: images ON by default. Mobile: skip media entirely.
       if (isMobile) {
         imagesSwitch.checked = false;
-        toggleImages(false);  // ensures hidden + no load
+        toggleImages(false);
       } else {
         imagesSwitch.checked = true;
-        toggleImages(true);   // will lazy-load media now (desktop only)
+        toggleImages(true);
       }
 
       editor.innerText = loadSoloText();
@@ -613,7 +606,6 @@
         const current = editorEl.innerText;
 
         if (remoteText === current) {
-          // If it's empty, still ensure viewers reset font size properly.
           if ((remoteText ?? "").trim() === "") {
             try { window.TotoTypeUI?.onRemoteTextApplied?.(remoteText); } catch {}
           }
