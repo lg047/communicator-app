@@ -9,6 +9,7 @@
   <meta property="og:type" content="website" />
   <link rel="icon" href="/tototype_icon_new.png" type="image/png" />
   <title>TotoType</title>
+
   <style>
     html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;transition:background-color .3s,color .3s}
     body.dark-mode{color:#fff}
@@ -46,6 +47,7 @@
       z-index:1004;
       align-items:center;
     }
+
     .topBtn{
       border:none;
       border-radius:14px;
@@ -90,8 +92,8 @@
     .settings-item{display:flex;justify-content:space-between;align-items:center;margin:10px 0}
     .switch{position:relative;display:inline-block;width:50px;height:24px}
     .switch input{opacity:0;width:0;height:0}
-    .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;transition:.4s;border-radius:24px}
-    .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.4s;border-radius:50%}
+    .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;transition:.2s;border-radius:24px}
+    .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.2s;border-radius:50%}
     input:checked + .slider{background:#2196f3}
     input:checked + .slider:before{transform:translateX(26px)}
     .switch-label{font-size:.95rem;color:inherit}
@@ -128,92 +130,98 @@
     #jpHead{right:0;height:225px}
     #dog.pressed,#jpHead.pressed{filter:brightness(.8)}
 
-    /* ---------- Mobile / iOS UI (HUGE + thumb friendly) ---------- */
+    /* ---------- Mobile / iOS UI: BIG CONTROLS, NOT BIG WHITESPACE ---------- */
     @media (max-width: 900px), (pointer: coarse) {
       /* Use mobile top bar instead of desktop gear */
       #settingsBtn{display:none;}
       #mobileTopBar{
         display:flex;
-        top:calc(12px + env(safe-area-inset-top));
-        right:12px;
-        gap:14px;
+        top:calc(14px + env(safe-area-inset-top));
+        right:14px;
+        gap:18px;
       }
 
-      /* Make the mobile buttons MASSIVE */
+      /* MASSIVE thumb buttons */
       .topBtn{
-        border-radius:28px;
+        border-radius:34px;
         padding:26px 34px;
-        font-size:2.1rem;
-        min-height:78px;
-        box-shadow:0 10px 26px rgba(0,0,0,.22);
+        font-size:2.4rem;      /* huge text */
+        min-height:96px;       /* huge tap target */
+        min-width:160px;
+        box-shadow:0 12px 30px rgba(0,0,0,.25);
       }
       #mobileGear{
-        padding:24px 26px;
-        font-size:2.3rem;
-        min-width:78px;
-        min-height:78px;
+        min-width:96px;
+        min-height:96px;
+        padding:22px 24px;
+        font-size:2.8rem;      /* huge icon */
       }
 
       /* Remove footer on mobile entirely */
       #controls{display:none !important;}
       #shortcuts{display:none !important;}
 
-      /* Better mobile text area (leave room for massive top bar) */
+      /* Leave room for the big top bar */
       #editor{
-        padding:150px 22px;
+        padding:160px 22px;
         height:100%;
       }
 
-      /* Settings menu becomes near-fullscreen sheet */
+      /* Settings modal: large, but tight (no giant empty space) */
       #settingsMenu{
-        top:calc(18px + env(safe-area-inset-top));
-        left:12px;
-        right:12px;
-        bottom:calc(18px + env(safe-area-inset-bottom));
+        top:calc(130px + env(safe-area-inset-top));
+        left:14px;
+        right:14px;
         width:auto;
-        height:auto;
         transform:none;
-        border-radius:26px;
-        padding:28px 22px;
-        box-shadow:0 18px 52px rgba(0,0,0,.32);
-        justify-content:flex-start;
-        gap:10px;
+        border-radius:30px;
+
+        /* IMPORTANT: keep padding modest so space goes to controls */
+        padding:16px 16px 14px;
+
+        /* allow it to grow if needed, but don't force full-screen */
+        max-height:calc(100vh - (180px + env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+        overflow:auto;
+        box-shadow:0 18px 55px rgba(0,0,0,.35);
       }
 
       /* Hide options you don't want on mobile */
       #cueItem{display:none !important;}
       #imagesItem{display:none !important;}
 
-      /* Make each row huge and thumb tappable */
+      /* Make each row itself a BIG tap zone */
       .settings-item{
         margin:0;
-        padding:18px 10px;
-        border-radius:18px;
+        padding:18px 8px;
       }
+
+      /* HUGE labels */
       .switch-label{
-        font-size:1.9rem;
+        font-size:2.6rem;   /* big, readable */
+        line-height:1.15;
       }
 
-      /* MASSIVE switches */
-      .switch{width:108px;height:56px}
-      .slider{border-radius:56px}
+      /* HUGE switches (track + knob) */
+      .switch{width:140px;height:72px}
+      .slider{border-radius:72px}
       .slider:before{
-        height:46px;width:46px;
-        left:5px;bottom:5px;
+        height:60px;width:60px;
+        left:6px;bottom:6px;
       }
-      input:checked + .slider:before{transform:translateX(52px)}
+      input:checked + .slider:before{transform:translateX(58px)}
 
-      /* MASSIVE Done button */
+      /* HUGE Done button, directly after toggles (no auto bottom spacing) */
       #doneBtn{
-        margin-top:auto;
+        margin-top:16px;
         padding:22px 18px;
-        font-size:2rem;
-        border-radius:22px;
+        font-size:2.6rem;
+        border-radius:26px;
         border-width:2px;
       }
     }
   </style>
 </head>
+
 <body>
   <!-- Mobile top bar -->
   <div id="mobileTopBar">
@@ -306,7 +314,6 @@
     const DEFAULT_FONT_VW_DESKTOP = 6;
     const DEFAULT_FONT_VW_MOBILE  = 10;
     let defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
-
     let fontSizeVW = defaultFontVW;
 
     const RED_BG='#ffecec',GREEN_BG='#ecffec',DARK_RED_BG='#330000',DARK_GREEN_BG='#003300';
@@ -343,7 +350,6 @@
 
     // ---------- Media lazy-load (desktop only, and only when images ON) ----------
     let mediaLoaded = false;
-
     function loadMediaIfNeeded(){
       if (mediaLoaded) return;
       mediaLoaded = true;
