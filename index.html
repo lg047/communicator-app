@@ -28,7 +28,7 @@
       color:inherit
     }
 
-    /* Top-right desktop gear */
+    /* Desktop gear */
     #settingsBtn{
       position:fixed;top:20px;right:20px;
       background:none;border:none;
@@ -48,9 +48,9 @@
     }
     .topBtn{
       border:none;
-      border-radius:22px;
-      padding:20px 26px;
-      font-size:1.6rem;
+      border-radius:14px;
+      padding:12px 16px;
+      font-size:1.15rem;
       line-height:1;
       background:rgba(255,255,255,.92);
       box-shadow:0 6px 18px rgba(0,0,0,.18);
@@ -58,17 +58,14 @@
       color:#111;
       -webkit-tap-highlight-color: transparent;
     }
-
     body.dark-mode .topBtn{
       background:rgba(0,0,0,.75);
       color:#fff;
     }
-
     #mobileGear{
-      padding:20px 22px;
-      font-size:1.9rem;
+      padding:12px 14px;
+      font-size:1.4rem;
     }
-
 
     /* overlay for mobile modal */
     #settingsOverlay{
@@ -78,7 +75,7 @@
       z-index:1001
     }
 
-    /* Settings menu (desktop default: small popover) */
+    /* Settings menu (desktop default) */
     #settingsMenu{
       position:fixed;top:80px;right:20px;
       background:rgba(255,255,255,.95);
@@ -131,37 +128,89 @@
     #jpHead{right:0;height:225px}
     #dog.pressed,#jpHead.pressed{filter:brightness(.8)}
 
-    /* ---------- Mobile / iOS UI ---------- */
+    /* ---------- Mobile / iOS UI (HUGE + thumb friendly) ---------- */
     @media (max-width: 900px), (pointer: coarse) {
-      /* Use a mobile top bar instead of the desktop gear */
+      /* Use mobile top bar instead of desktop gear */
       #settingsBtn{display:none;}
-      #mobileTopBar{display:flex;}
+      #mobileTopBar{
+        display:flex;
+        top:calc(12px + env(safe-area-inset-top));
+        right:12px;
+        gap:14px;
+      }
+
+      /* Make the mobile buttons MASSIVE */
+      .topBtn{
+        border-radius:28px;
+        padding:26px 34px;
+        font-size:2.1rem;
+        min-height:78px;
+        box-shadow:0 10px 26px rgba(0,0,0,.22);
+      }
+      #mobileGear{
+        padding:24px 26px;
+        font-size:2.3rem;
+        min-width:78px;
+        min-height:78px;
+      }
 
       /* Remove footer on mobile entirely */
       #controls{display:none !important;}
       #shortcuts{display:none !important;}
 
-      /* Better mobile text area */
+      /* Better mobile text area (leave room for massive top bar) */
       #editor{
-        padding:90px 22px; /* leave room for top bar */
+        padding:150px 22px;
         height:100%;
       }
 
-      /* Big modal settings */
+      /* Settings menu becomes near-fullscreen sheet */
       #settingsMenu{
-        top:50%;left:50%;right:auto;
-        transform:translate(-50%,-50%);
-        width:min(92vw,460px);
-        border-radius:18px;
-        padding:18px 18px 14px;
-        box-shadow:0 12px 38px rgba(0,0,0,.28);
+        top:calc(18px + env(safe-area-inset-top));
+        left:12px;
+        right:12px;
+        bottom:calc(18px + env(safe-area-inset-bottom));
+        width:auto;
+        height:auto;
+        transform:none;
+        border-radius:26px;
+        padding:28px 22px;
+        box-shadow:0 18px 52px rgba(0,0,0,.32);
+        justify-content:flex-start;
+        gap:10px;
       }
-      .switch-label{font-size:1.15rem;}
-      #doneBtn{padding:12px;font-size:1.1rem;border-radius:14px;}
 
       /* Hide options you don't want on mobile */
       #cueItem{display:none !important;}
       #imagesItem{display:none !important;}
+
+      /* Make each row huge and thumb tappable */
+      .settings-item{
+        margin:0;
+        padding:18px 10px;
+        border-radius:18px;
+      }
+      .switch-label{
+        font-size:1.9rem;
+      }
+
+      /* MASSIVE switches */
+      .switch{width:108px;height:56px}
+      .slider{border-radius:56px}
+      .slider:before{
+        height:46px;width:46px;
+        left:5px;bottom:5px;
+      }
+      input:checked + .slider:before{transform:translateX(52px)}
+
+      /* MASSIVE Done button */
+      #doneBtn{
+        margin-top:auto;
+        padding:22px 18px;
+        font-size:2rem;
+        border-radius:22px;
+        border-width:2px;
+      }
     }
   </style>
 </head>
@@ -255,7 +304,7 @@
 
     // ---------- UI state ----------
     const DEFAULT_FONT_VW_DESKTOP = 6;
-    const DEFAULT_FONT_VW_MOBILE  = 10;  // bigger default on iOS/mobile
+    const DEFAULT_FONT_VW_MOBILE  = 10;
     let defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
 
     let fontSizeVW = defaultFontVW;
@@ -299,7 +348,6 @@
       if (mediaLoaded) return;
       mediaLoaded = true;
 
-      // Use getAttribute('src') because element.src becomes truthy even when unset/empty.
       if (dog && !dog.getAttribute('src')) dog.setAttribute('src', dog.dataset.src || '');
       if (jpHead && !jpHead.getAttribute('src')) jpHead.setAttribute('src', jpHead.dataset.src || '');
 
@@ -308,7 +356,6 @@
     }
 
     function toggleImages(show){
-      // On mobile: skip media entirely (never load, always hidden)
       if (isMobile) {
         dog.style.display = 'none';
         jpHead.style.display = 'none';
@@ -317,7 +364,6 @@
         return;
       }
 
-      // Desktop: load media only if needed and showing
       if (show) loadMediaIfNeeded();
 
       const disp = show ? '' : 'none';
@@ -498,21 +544,19 @@
       zoomOutBtn.addEventListener('click',()=>{ fontSizeVW=Math.max(fontSizeVW-1,2); setFontSize(); editor.focus(); });
     }
 
-    // Mobile clear button (top bar)
+    // Mobile clear button
     mobileClear.addEventListener('click', clearAndPropagate);
 
     // ---------- init ----------
     window.onload=()=>{
       editor.focus();
 
-      // default to Solo on load
       shareSwitch.checked = false;
 
       defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
       fontSizeVW = defaultFontVW;
       setFontSize();
 
-      // Desktop: images ON by default. Mobile: skip media entirely.
       if (isMobile) {
         imagesSwitch.checked = false;
         toggleImages(false);
