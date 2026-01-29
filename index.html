@@ -80,7 +80,7 @@
       display:none;flex-direction:column;
       padding:12px;
       box-shadow:0 2px 8px rgba(0,0,0,.18);
-      z-index:1002;width:240px
+      z-index:1002;width:260px
     }
     body.dark-mode #settingsMenu{background:rgba(0,0,0,.9);border-color:#444}
 
@@ -137,7 +137,7 @@
         justify-content:flex-end;
       }
 
-      /* Clear + Gear sizes (UNCHANGED) */
+      /* Clear + Gear sizes (kept as requested) */
       #mobileClear{
         width:auto;
         padding:14px 18px;
@@ -161,7 +161,7 @@
         height:100%;
       }
 
-      /* ✅ Settings modal: ~25% smaller (box + contents) */
+      /* Settings modal: slightly smaller */
       #settingsMenu{
         left:16px;
         right:16px;
@@ -169,11 +169,11 @@
         transform:translateY(-50%);
         width:auto;
 
-        max-height:42vh;          /* smaller than before */
+        max-height:42vh;
         overflow:auto;
 
-        border-radius:22px;       /* slightly smaller corners */
-        padding:10px 10px 10px;   /* tighter */
+        border-radius:22px;
+        padding:10px 10px 10px;
         box-shadow:0 16px 48px rgba(0,0,0,.32);
       }
 
@@ -183,11 +183,11 @@
 
       .settings-item{
         margin:0;
-        padding:10px 4px;         /* smaller rows */
+        padding:10px 4px;
       }
 
       .switch-label{
-        font-size:1.65rem;        /* ~25% smaller than 2.2rem */
+        font-size:1.65rem;
         line-height:1.15;
       }
 
@@ -243,6 +243,11 @@
       <label class="switch"><input type="checkbox" id="shareSwitch"><span class="slider"></span></label>
     </div>
 
+    <div class="settings-item" id="viewerItem">
+      <span class="switch-label">Viewer Mode</span>
+      <label class="switch"><input type="checkbox" id="viewerSwitch"><span class="slider"></span></label>
+    </div>
+
     <button id="doneBtn">Done</button>
   </div>
 
@@ -275,6 +280,7 @@
     const readySwitch=document.getElementById('readySwitch');
     const imagesSwitch=document.getElementById('imagesSwitch');
     const shareSwitch=document.getElementById('shareSwitch');
+    const viewerSwitch=document.getElementById('viewerSwitch');
 
     const zoomInBtn=document.getElementById('zoomIn');
     const zoomOutBtn=document.getElementById('zoomOut');
@@ -314,11 +320,18 @@
       }
     }
 
+    function currentMode(){
+      if (viewerSwitch.checked) return 'viewer';
+      if (shareSwitch.checked) return 'share';
+      return 'solo';
+    }
+
     function updateShortcuts(){
       if (isMobile) { shortcuts.textContent = ''; return; }
-      let mode = shareSwitch.checked ? 'Share' : 'Solo';
-      let t = `Mode: ${mode} | Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom`;
-      if(readySwitch.checked)t='Ctrl+Enter: Cue | '+t;
+      const mode = currentMode();
+      let t = `Mode: ${mode[0].toUpperCase()+mode.slice(1)} | Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom`;
+      if(mode==='viewer') t = `Mode: Viewer | Read-only`;
+      if(readySwitch.checked && mode!=='viewer') t='Ctrl+Enter: Cue | '+t;
       shortcuts.textContent=t;
     }
 
@@ -334,6 +347,24 @@
       editor.style.color = darkSwitch.checked ? '#fff' : '';
       updateShortcuts();
       updateBg();
+    }
+
+    // ---------- Editor editability by mode ----------
+    function applyEditorByMode(){
+      const mode = currentMode();
+      if (mode === 'viewer') {
+        editor.blur();
+        editor.setAttribute('contenteditable','false');
+        editor.style.pointerEvents = 'auto'; // allow scrolling/selection if any
+      } else {
+        editor.setAttribute('contenteditable','true');
+        editor.style.pointerEvents = 'auto';
+      }
+
+      // Clear button visible only when NOT viewer
+      if (mobileClear) {
+        mobileClear.style.display = (mode === 'viewer') ? 'none' : '';
+      }
     }
 
     // ---------- Media lazy-load (desktop only) ----------
@@ -434,6 +465,7 @@
     }
 
     async function clearAndPropagate(){
+      if (currentMode() === 'viewer') return; // viewer can't clear
       clearEditorAndReset();
       if (shareSwitch.checked) {
         if (window.FirebasePad?.setText) {
@@ -445,23 +477,23 @@
       if (!isMobile) editor.focus();
     }
 
-    // ---------- Disable typing while settings open ----------
+    // ---------- Settings open/close + disable typing while open ----------
     let settingsOpen = false;
-    function setEditorInteractive(on){
-      if (on) {
-        editor.setAttribute('contenteditable','true');
-        editor.style.pointerEvents = 'auto';
-      } else {
+
+    function setEditorInteractiveWhileSettings(open){
+      if (open) {
         editor.blur();
         editor.setAttribute('contenteditable','false');
         editor.style.pointerEvents = 'none';
+      } else {
+        editor.style.pointerEvents = 'auto';
+        applyEditorByMode(); // restore correct mode behavior
       }
     }
 
-    // ---------- Settings open/close ----------
     function openSettings(){
       settingsOpen = true;
-      setEditorInteractive(false);
+      setEditorInteractiveWhileSettings(true);
       settingsMenu.style.display='flex';
       if (isMobile) settingsOverlay.style.display='block';
     }
@@ -469,25 +501,69 @@
       settingsOpen = false;
       settingsMenu.style.display='none';
       settingsOverlay.style.display='none';
-      setEditorInteractive(true);
-      if (!isMobile) editor.focus();
+      setEditorInteractiveWhileSettings(false);
+      // Don’t auto-focus on mobile (prevents keyboard popping up)
+      if (!isMobile && currentMode() !== 'viewer') editor.focus();
     }
 
-    settingsBtn.addEventListener('click',()=>{
-      (settingsMenu.style.display==='flex') ? closeSettings() : openSettings();
-    });
-    mobileGear.addEventListener('click',()=>{
-      (settingsMenu.style.display==='flex') ? closeSettings() : openSettings();
-    });
+    settingsBtn.addEventListener('click',()=> (settingsMenu.style.display==='flex') ? closeSettings() : openSettings());
+    mobileGear.addEventListener('click',()=> (settingsMenu.style.display==='flex') ? closeSettings() : openSettings());
     settingsOverlay.addEventListener('click', closeSettings);
     doneBtn.addEventListener('click', closeSettings);
 
     // Prevent stray taps from focusing editor when settings open (iOS)
     document.addEventListener('touchstart', (e)=>{
       if (!settingsOpen) return;
-      const t = e.target;
-      if (t === editor) { e.preventDefault(); e.stopPropagation(); }
+      if (e.target === editor) { e.preventDefault(); e.stopPropagation(); }
     }, {passive:false});
+
+    // ---------- Mode transitions ----------
+    async function toSolo(){
+      // stop sync
+      if (window.FirebasePad?.disable) window.FirebasePad.disable();
+      // restore solo draft
+      editor.innerText = loadSoloText();
+      fontSizeVW = defaultFontVW; setFontSize();
+      adjustFontSizeToFit();
+      shareSwitch.checked = false;
+      viewerSwitch.checked = false;
+      applyEditorByMode();
+      refreshState();
+    }
+
+    async function toShare(fromSolo){
+      viewerSwitch.checked = false;
+      shareSwitch.checked = true;
+
+      if (fromSolo) {
+        saveSoloText(editor.innerText);
+        editor.innerText = '';
+        fontSizeVW = defaultFontVW; setFontSize();
+        refreshState();
+      }
+
+      applyEditorByMode();
+      if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:true });
+      if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(true);
+      refreshState();
+    }
+
+    async function toViewer(fromSolo){
+      shareSwitch.checked = false;
+      viewerSwitch.checked = true;
+
+      if (fromSolo) {
+        saveSoloText(editor.innerText);
+        editor.innerText = '';
+        fontSizeVW = defaultFontVW; setFontSize();
+        refreshState();
+      }
+
+      applyEditorByMode();
+      if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:false });
+      if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(false);
+      refreshState();
+    }
 
     // ---------- Toggles ----------
     darkSwitch.addEventListener('change',()=>{
@@ -497,35 +573,68 @@
 
     readySwitch.addEventListener('change', refreshState);
 
-    imagesSwitch.addEventListener('change',()=>{
-      toggleImages(imagesSwitch.checked);
+    imagesSwitch.addEventListener('change',()=> toggleImages(imagesSwitch.checked));
+
+    // Share / Viewer are mutually exclusive
+    shareSwitch.addEventListener('change', async ()=>{
+      const wasSolo = (!viewerSwitch.checked && !shareSwitch.checked);
+      if (shareSwitch.checked) {
+        viewerSwitch.checked = false;
+        // if we were solo before toggling, wasSolo is false now; compute explicitly:
+        const fromSolo = (viewerSwitch.checked===false) && (shareSwitch.checked===true) && (window.FirebasePad?.isEnabled?.() !== true) && (currentMode() === 'share') && (loadSoloText() !== null);
+        // better explicit: solo if viewer unchecked AND share checked just switched on AND Firebase not enabled previously
+        // We'll approximate with: if previously neither share nor viewer checked.
+        // We'll track previous state more reliably:
+      }
     });
 
-    // ---------- Share mode ----------
-    async function setShareMode(on){
-      if (on) {
-        saveSoloText(editor.innerText);
-        editor.innerText = '';
-        fontSizeVW = defaultFontVW; setFontSize();
-        refreshState();
-        if (window.FirebasePad?.enable) await window.FirebasePad.enable();
-      } else {
-        if (window.FirebasePad?.disable) window.FirebasePad.disable();
-        editor.innerText = loadSoloText();
-        fontSizeVW = defaultFontVW; setFontSize();
-        adjustFontSizeToFit();
-        refreshState();
+    // We'll use explicit previous state tracking for mode toggles:
+    let prevMode = 'solo';
+
+    async function handleModeChange(){
+      const mode = currentMode();
+      if (mode === prevMode) { applyEditorByMode(); refreshState(); return; }
+
+      if (mode === 'solo') {
+        await toSolo();
+      } else if (mode === 'share') {
+        if (prevMode === 'solo') await toShare(true);
+        else {
+          // from viewer -> share: keep text, just make writable + editable
+          applyEditorByMode();
+          if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:true });
+          if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(true);
+          refreshState();
+        }
+      } else if (mode === 'viewer') {
+        if (prevMode === 'solo') await toViewer(true);
+        else {
+          // from share -> viewer: keep text, just make read-only + no writes
+          applyEditorByMode();
+          if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:false });
+          if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(false);
+          refreshState();
+        }
       }
+
+      prevMode = mode;
+      // prevent iOS keyboard popping if viewer
+      if (isMobile || mode === 'viewer') editor.blur();
     }
 
     shareSwitch.addEventListener('change', async ()=>{
-      await setShareMode(shareSwitch.checked);
-      if (!isMobile) editor.focus();
-      refreshState();
+      if (shareSwitch.checked) viewerSwitch.checked = false;
+      await handleModeChange();
+    });
+
+    viewerSwitch.addEventListener('change', async ()=>{
+      if (viewerSwitch.checked) shareSwitch.checked = false;
+      await handleModeChange();
     });
 
     // ---------- Input handling ----------
     editor.addEventListener('input',()=>{
+      if (currentMode() === 'viewer') return;
       if (!shareSwitch.checked) saveSoloText(editor.innerText);
       adjustFontSizeToFit();
       refreshState();
@@ -534,6 +643,7 @@
     // Desktop keyboard shortcuts
     document.addEventListener('keydown',e=>{
       if (isMobile) return;
+      if (currentMode() === 'viewer') return;
 
       if(readySwitch.checked && e.ctrlKey && e.key==='Enter'){
         e.preventDefault();
@@ -559,8 +669,8 @@
 
     // Desktop zoom buttons
     if (zoomInBtn && zoomOutBtn){
-      zoomInBtn.addEventListener('click',()=>{ fontSizeVW=Math.min(fontSizeVW+1,20); setFontSize(); editor.focus(); });
-      zoomOutBtn.addEventListener('click',()=>{ fontSizeVW=Math.max(fontSizeVW-1,2); setFontSize(); editor.focus(); });
+      zoomInBtn.addEventListener('click',()=>{ fontSizeVW=Math.min(fontSizeVW+1,20); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
+      zoomOutBtn.addEventListener('click',()=>{ fontSizeVW=Math.max(fontSizeVW-1,2); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
     }
 
     // Mobile clear button
@@ -568,12 +678,16 @@
 
     // ---------- init ----------
     window.onload=()=>{
+      // default to Solo on load
       shareSwitch.checked = false;
+      viewerSwitch.checked = false;
+      prevMode = 'solo';
 
       defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
       fontSizeVW = defaultFontVW;
       setFontSize();
 
+      // Mobile: skip media. Desktop: images ON by default.
       if (isMobile) {
         imagesSwitch.checked = false;
         toggleImages(false);
@@ -584,14 +698,16 @@
 
       editor.innerText = loadSoloText();
       adjustFontSizeToFit();
+      applyEditorByMode();
       refreshState();
 
+      // Keep keyboard closed initially on mobile
       if (isMobile) editor.blur();
       else editor.focus();
     };
   </script>
 
-  <!-- Firebase sync is ONLY loaded/used when Share Mode is enabled -->
+  <!-- Firebase sync is ONLY loaded/used when Share/Viewer is enabled -->
   <script type="module">
     const FIREBASE_APP_URL = "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
     const FIREBASE_DB_URL  = "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
@@ -611,6 +727,7 @@
     let applyingRemote=false;
     let writeTimer=null;
     let inputHandler=null;
+    let writable=false;
 
     async function ensureFirebase(){
       if (app && db && padRef) return;
@@ -623,6 +740,31 @@
 
       window.__fb_set = set;
       window.__fb_onValue = onValue;
+    }
+
+    function attachWriter(){
+      const editorEl = document.getElementById("editor");
+      const { set } = window.__fb_set ? { set: window.__fb_set } : {};
+      if (inputHandler) return;
+
+      inputHandler = () => {
+        if (!writable) return;
+        if (applyingRemote) return;
+        clearTimeout(writeTimer);
+        const text = editorEl.innerText;
+        writeTimer = setTimeout(async () => {
+          try { await set(padRef, text); } catch (e) { console.error(e); }
+        }, 80);
+      };
+      editorEl.addEventListener("input", inputHandler);
+    }
+
+    function detachWriter(){
+      const editorEl = document.getElementById("editor");
+      if (inputHandler) editorEl.removeEventListener("input", inputHandler);
+      inputHandler = null;
+      if (writeTimer) clearTimeout(writeTimer);
+      writeTimer = null;
     }
 
     function getCaretOffset(el){
@@ -661,66 +803,67 @@
       try { await set(padRef, text ?? ""); } catch (e) { console.error(e); }
     }
 
-    async function enable(){
+    async function enable(opts={writable:true}){
       await ensureFirebase();
-      if (unsub) return;
+      writable = !!opts.writable;
 
       const editorEl = document.getElementById("editor");
-      const { set, onValue } = window.__fb_set ? { set: window.__fb_set, onValue: window.__fb_onValue } : {};
+      const { onValue } = window.__fb_onValue ? { onValue: window.__fb_onValue } : {};
+      if (!unsub) {
+        unsub = onValue(padRef, (snap) => {
+          const remoteText = snap.val() ?? "";
+          const current = editorEl.innerText;
 
-      unsub = onValue(padRef, (snap) => {
-        const remoteText = snap.val() ?? "";
-        const current = editorEl.innerText;
-
-        if (remoteText === current) {
-          if ((remoteText ?? "").trim() === "") {
-            try { window.TotoTypeUI?.onRemoteTextApplied?.(remoteText); } catch {}
+          if (remoteText === current) {
+            if ((remoteText ?? "").trim() === "") {
+              try { window.TotoTypeUI?.onRemoteTextApplied?.(remoteText); } catch {}
+            }
+            return;
           }
-          return;
-        }
 
-        const focused = (document.activeElement === editorEl);
-        const caret = focused ? getCaretOffset(editorEl) : null;
+          const focused = (document.activeElement === editorEl);
+          const caret = focused ? getCaretOffset(editorEl) : null;
 
-        applyingRemote = true;
-        editorEl.innerText = remoteText;
-        applyingRemote = false;
+          applyingRemote = true;
+          editorEl.innerText = remoteText;
+          applyingRemote = false;
 
-        try { window.TotoTypeUI?.onRemoteTextApplied?.(remoteText); } catch {}
+          try { window.TotoTypeUI?.onRemoteTextApplied?.(remoteText); } catch {}
 
-        if (focused && caret !== null) {
-          try { setCaretOffset(editorEl, Math.min(caret, editorEl.innerText.length)); } catch {}
-        }
-      });
+          if (focused && caret !== null) {
+            try { setCaretOffset(editorEl, Math.min(caret, editorEl.innerText.length)); } catch {}
+          }
+        });
+      }
 
-      inputHandler = () => {
-        if (applyingRemote) return;
-        clearTimeout(writeTimer);
-        const text = editorEl.innerText;
-        writeTimer = setTimeout(async () => {
-          try { await set(padRef, text); } catch (e) { console.error(e); }
-        }, 80);
-      };
-      editorEl.addEventListener("input", inputHandler);
+      if (writable) attachWriter();
+      else detachWriter();
+    }
+
+    function setWritable(w){
+      writable = !!w;
+      if (writable) attachWriter();
+      else detachWriter();
     }
 
     function disable(){
       const editorEl = document.getElementById("editor");
-      if (inputHandler) editorEl.removeEventListener("input", inputHandler);
-      inputHandler = null;
-
+      detachWriter();
       if (unsub) { try { unsub(); } catch {} }
       unsub = null;
-
-      if (writeTimer) clearTimeout(writeTimer);
-      writeTimer = null;
+      applyingRemote=false;
+      // leave editor text as-is
+      if (editorEl) {}
     }
+
+    function isEnabled(){ return !!unsub; }
 
     window.FirebasePad = {
       enable,
       disable,
       setText,
-      isEnabled: () => !!unsub
+      setWritable,
+      isEnabled
     };
   </script>
 </body>
