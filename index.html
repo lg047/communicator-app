@@ -110,6 +110,14 @@
       updateBg();
     }
 
+    // ----- NEW: expose a tiny hook so Firebase remote updates can trigger the same auto-fit behavior -----
+    window.TotoTypeUI = window.TotoTypeUI || {};
+    window.TotoTypeUI.onRemoteTextApplied = () => {
+      // Do NOT reset fontSizeVW here; just apply the same "shrink to fit" logic.
+      adjustFontSizeToFit();
+      refreshState();
+    };
+
     // ---------- Select-all-then-delete helpers ----------
     function selectionCoversAll(el){
       const sel = window.getSelection?.();
@@ -329,6 +337,12 @@
       try { el.focus(); } catch {}
     }
 
+    onRemoteApplied();
+
+    function onRemoteApplied(){
+      try { window.TotoTypeUI?.onRemoteTextApplied?.(); } catch {}
+    }
+
     async function enable(){
       await ensureFirebase();
       if (unsub) return; // already enabled
@@ -350,6 +364,9 @@
         editorEl.innerText = remoteText;
         applyingRemote = false;
 
+        // IMPORTANT: apply the same auto-fit behavior on remote updates
+        onRemoteApplied();
+
         if (focused && caret !== null) {
           try { setCaretOffset(editorEl, Math.min(caret, editorEl.innerText.length)); } catch {}
         }
@@ -365,6 +382,9 @@
         }, 80);
       };
       editorEl.addEventListener("input", inputHandler);
+
+      // When enabling, the onValue callback will fire with current remote state;
+      // no extra work needed here.
     }
 
     function disable(){
@@ -387,3 +407,4 @@
   </script>
 </body>
 </html>
+
