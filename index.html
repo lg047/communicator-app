@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- ✅ CRITICAL for iPhone sizing + media queries -->
+  <!-- ✅ critical for iPhone sizing + media queries -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <meta property="og:title" content="TotoType" />
@@ -53,12 +53,8 @@
 
     .topBtn{
       border:none;
-      border-radius:14px;
-      padding:12px 16px;
-      font-size:1.15rem;
-      line-height:1;
       background:rgba(255,255,255,.92);
-      box-shadow:0 6px 18px rgba(0,0,0,.18);
+      box-shadow:0 10px 22px rgba(0,0,0,.22);
       cursor:pointer;
       color:#111;
       -webkit-tap-highlight-color: transparent;
@@ -66,10 +62,6 @@
     body.dark-mode .topBtn{
       background:rgba(0,0,0,.75);
       color:#fff;
-    }
-    #mobileGear{
-      padding:12px 14px;
-      font-size:1.4rem;
     }
 
     /* overlay for mobile modal */
@@ -133,95 +125,89 @@
     #jpHead{right:0;height:225px}
     #dog.pressed,#jpHead.pressed{filter:brightness(.8)}
 
-    /* ---------- Mobile / iOS UI: BIG CONTROLS, centered modal, no background typing ---------- */
+    /* ---------- Mobile / iOS UI: sane big, centered modal, no background typing ---------- */
     @media (max-width: 900px), (pointer: coarse) {
       /* Use mobile top bar instead of desktop gear */
       #settingsBtn{display:none;}
       #mobileTopBar{
         display:flex;
         top:calc(14px + env(safe-area-inset-top));
-        left:14px;
         right:14px;
+        gap:16px;
         justify-content:flex-end;
-        gap:18px;
       }
 
-      /* Make them take ~50% of width combined (big thumb targets) */
-      #mobileClear{ width:34vw; }
-      #mobileGear{ width:16vw; }
-
-      /* MASSIVE thumb buttons */
-      .topBtn{
-        border-radius:38px;
-        padding:28px 26px;
-        font-size:2.8rem;      /* BIG */
-        min-height:112px;      /* BIG tap target */
-        box-shadow:0 14px 34px rgba(0,0,0,.28);
+      /* Clear: snug pill that fits text */
+      #mobileClear{
+        width:auto;
+        padding:14px 18px;
+        font-size:2.0rem;
+        border-radius:22px;
       }
+
+      /* Gear: small round icon button */
       #mobileGear{
-        min-height:112px;
-        padding:22px 18px;
-        font-size:3.2rem;      /* BIG icon */
-        text-align:center;
+        width:auto;
+        padding:12px 14px;
+        font-size:2.2rem;
+        border-radius:999px;
       }
 
       /* Remove footer on mobile entirely */
       #controls{display:none !important;}
       #shortcuts{display:none !important;}
 
-      /* Leave room for the big top bar */
+      /* Leave room for top bar */
       #editor{
-        padding:170px 22px;
+        padding:140px 22px;
         height:100%;
       }
 
-      /* Settings modal: vertically centered */
+      /* Settings modal: smaller, vertically centered */
       #settingsMenu{
-        left:14px;
-        right:14px;
+        left:16px;
+        right:16px;
         top:50%;
         transform:translateY(-50%);
         width:auto;
-
-        border-radius:34px;
-        padding:18px 16px 16px; /* modest padding (no giant empty space) */
-        box-shadow:0 18px 55px rgba(0,0,0,.35);
-
-        max-height:70vh;
+        max-height:52vh;
         overflow:auto;
+        border-radius:26px;
+        padding:14px 14px 12px;
+        box-shadow:0 18px 55px rgba(0,0,0,.35);
       }
 
       /* Hide options you don't want on mobile */
       #cueItem{display:none !important;}
       #imagesItem{display:none !important;}
 
-      /* Make each row a BIG tap zone */
+      /* Big tap zones */
       .settings-item{
         margin:0;
-        padding:18px 8px;
+        padding:14px 6px;
       }
 
-      /* HUGE labels */
+      /* Big labels */
       .switch-label{
-        font-size:3.0rem;
+        font-size:2.2rem;
         line-height:1.15;
       }
 
-      /* HUGE switches */
-      .switch{width:160px;height:82px}
-      .slider{border-radius:82px}
+      /* Big switches */
+      .switch{width:132px;height:68px}
+      .slider{border-radius:68px}
       .slider:before{
-        height:70px;width:70px;
-        left:6px;bottom:6px;
+        width:58px;height:58px;
+        left:5px;bottom:5px;
       }
-      input:checked + .slider:before{transform:translateX(70px)}
+      input:checked + .slider:before{transform:translateX(58px)}
 
-      /* HUGE Done button */
+      /* Big Done button */
       #doneBtn{
         margin-top:16px;
-        padding:26px 18px;
-        font-size:3.0rem;
-        border-radius:30px;
+        font-size:2.2rem;
+        padding:18px 16px;
+        border-radius:22px;
         border-width:2px;
       }
     }
@@ -488,7 +474,6 @@
       settingsMenu.style.display='none';
       settingsOverlay.style.display='none';
       setEditorInteractive(true);
-      // Don’t auto-focus on mobile (prevents keyboard popping up)
       if (!isMobile) editor.focus();
     }
 
@@ -501,7 +486,7 @@
     settingsOverlay.addEventListener('click', closeSettings);
     doneBtn.addEventListener('click', closeSettings);
 
-    // Prevent any stray taps from focusing editor when settings open
+    // Prevent stray taps from focusing editor when settings open (iOS)
     document.addEventListener('touchstart', (e)=>{
       if (!settingsOpen) return;
       const t = e.target;
@@ -605,7 +590,6 @@
       adjustFontSizeToFit();
       refreshState();
 
-      // Keep keyboard closed initially on mobile
       if (isMobile) editor.blur();
       else editor.focus();
     };
