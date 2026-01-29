@@ -14,7 +14,11 @@
     body.dark-mode{color:#fff}
     body.dark-mode #editor{color:#fff}
     #editor{width:100%;height:calc(100% - 80px);font-size:6vw;line-height:1.2;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;outline:none;padding:90px 200px;box-sizing:border-box;color:inherit}
-    #settingsBtn{position:fixed;top:20px;right:20px;background:none;border:none;font-size:4rem;cursor:pointer;color:#888;z-index:1000}
+    #settingsBtn{position:fixed;top:20px;right:20px;background:none;border:none;font-size:4rem;cursor:pointer;color:#888;z-index:1002}
+
+    /* overlay for mobile modal */
+    #settingsOverlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:1000}
+
     #settingsMenu{position:fixed;top:80px;right:20px;background:rgba(255,255,255,.9);border:1px solid #ccc;border-radius:4px;display:none;flex-direction:column;padding:10px;box-shadow:0 2px 5px rgba(0,0,0,.2);z-index:1001;width:220px}
     body.dark-mode #settingsMenu{background:rgba(0,0,0,.9);border-color:#444}
     .settings-item{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
@@ -26,28 +30,82 @@
     input:checked + .slider:before{transform:translateX(26px)}
     .switch-label{font-size:.9rem;color:inherit}
     #doneBtn{margin-top:10px;width:100%;padding:6px;font-size:.9rem;background:none;border:1px solid #888;border-radius:3px;cursor:pointer;color:inherit}
+
     #controls{position:fixed;bottom:10px;right:10px;background:rgba(255,255,255,.7);padding:5px;border-radius:5px;display:flex;gap:5px;z-index:1000}
     body.dark-mode #controls{background:rgba(0,0,0,.7)}
     #controls button{font-size:1rem;padding:.2em .5em;border:none;border-radius:3px;background:none;color:inherit;cursor:pointer}
+    #clearBtn{display:none;}
+
     #shortcuts{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.6);padding:4px 6px;border-radius:4px;font-size:.8rem;color:#333;pointer-events:none;z-index:1000}
     body.dark-mode #shortcuts{background:rgba(0,0,0,.6);color:#ddd}
     #dog,#jpHead{position:fixed;bottom:0;height:240px;pointer-events:auto;cursor:pointer;transition:transform .05s linear,filter .1s}
     #jpHead{right:0;height:225px}
     #dog.pressed,#jpHead.pressed{filter:brightness(.8)}
+
+    /* ---------- Mobile / iOS UI ---------- */
+    @media (max-width: 768px), (pointer: coarse) {
+      #editor{
+        padding:80px 24px;
+        height:calc(100% - 120px); /* give a bit more room for bigger controls */
+      }
+
+      /* Make settings into a big modal card */
+      #settingsMenu{
+        top:50%;
+        left:50%;
+        right:auto;
+        transform:translate(-50%,-50%);
+        width:min(92vw,420px);
+        border-radius:16px;
+        padding:18px;
+        box-shadow:0 10px 30px rgba(0,0,0,.25);
+      }
+
+      /* Hide Cue Mode + Show Images in settings on mobile */
+      #cueItem{display:none !important;}
+      #imagesItem{display:none !important;}
+
+      /* Bigger controls + add Clear */
+      #controls{
+        bottom:calc(10px + env(safe-area-inset-bottom));
+        right:10px;
+        padding:8px;
+        gap:8px;
+      }
+      #controls button{
+        font-size:1.15rem;
+        padding:.35em .7em;
+      }
+      #clearBtn{display:inline-flex;}
+
+      /* Make Done easier to hit */
+      #doneBtn{
+        padding:10px;
+        font-size:1rem;
+        border-radius:10px;
+      }
+      .switch-label{font-size:1.05rem;}
+    }
   </style>
 </head>
 <body>
   <button id="settingsBtn">⚙</button>
+  <div id="settingsOverlay"></div>
+
   <div id="settingsMenu">
-    <div class="settings-item"><span class="switch-label">Dark Mode</span><label class="switch"><input type="checkbox" id="darkSwitch"><span class="slider"></span></label></div>
-    <div class="settings-item"><span class="switch-label">Cue Mode</span><label class="switch"><input type="checkbox" id="readySwitch"><span class="slider"></span></label></div>
-    <div class="settings-item"><span class="switch-label">Show Images</span><label class="switch"><input type="checkbox" id="imagesSwitch" checked><span class="slider"></span></label></div>
-    <div class="settings-item"><span class="switch-label">Share Mode</span><label class="switch"><input type="checkbox" id="shareSwitch"><span class="slider"></span></label></div>
+    <div class="settings-item" id="darkItem"><span class="switch-label">Dark Mode</span><label class="switch"><input type="checkbox" id="darkSwitch"><span class="slider"></span></label></div>
+    <div class="settings-item" id="cueItem"><span class="switch-label">Cue Mode</span><label class="switch"><input type="checkbox" id="readySwitch"><span class="slider"></span></label></div>
+    <div class="settings-item" id="imagesItem"><span class="switch-label">Show Images</span><label class="switch"><input type="checkbox" id="imagesSwitch" checked><span class="slider"></span></label></div>
+    <div class="settings-item" id="shareItem"><span class="switch-label">Share Mode</span><label class="switch"><input type="checkbox" id="shareSwitch"><span class="slider"></span></label></div>
     <button id="doneBtn">Done</button>
   </div>
 
   <div id="editor" contenteditable="true" spellcheck="false"></div>
-  <div id="controls"><button id="zoomOut">A-</button><button id="zoomIn">A+</button></div>
+  <div id="controls">
+    <button id="clearBtn">Clear</button>
+    <button id="zoomOut">A-</button>
+    <button id="zoomIn">A+</button>
+  </div>
   <div id="shortcuts"></div>
 
   <img src="pipi_new1.png" id="dog" alt="pipi image">
@@ -61,6 +119,7 @@
     const editor=document.getElementById('editor');
     const settingsBtn=document.getElementById('settingsBtn');
     const settingsMenu=document.getElementById('settingsMenu');
+    const settingsOverlay=document.getElementById('settingsOverlay');
     const darkSwitch=document.getElementById('darkSwitch');
     const readySwitch=document.getElementById('readySwitch');
     const imagesSwitch=document.getElementById('imagesSwitch');
@@ -68,11 +127,25 @@
     const doneBtn=document.getElementById('doneBtn');
     const zoomInBtn=document.getElementById('zoomIn');
     const zoomOutBtn=document.getElementById('zoomOut');
+    const clearBtn=document.getElementById('clearBtn');
     const shortcuts=document.getElementById('shortcuts');
     const dog=document.getElementById('dog');
     const jpHead=document.getElementById('jpHead');
     const pipiAudio=document.getElementById('pipiSound');
     const jpAudio=document.getElementById('jpSound');
+
+    // ---------- Mobile detection + defaults ----------
+    const isMobile = (() => {
+      try {
+        return window.matchMedia?.('(pointer: coarse)').matches || window.innerWidth <= 768;
+      } catch {
+        return window.innerWidth <= 768;
+      }
+    })();
+
+    const DEFAULT_FONT_VW_DESKTOP = 6;
+    const DEFAULT_FONT_VW_MOBILE  = 10;   // bigger default on iOS/mobile
+    let defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
 
     // ---------- Local-only storage (Solo mode) ----------
     const SOLO_KEY = 'tototype_solo_text';
@@ -86,15 +159,25 @@
     function attachAnalyser(el){if(el.analyser||!ensureCtx())return;const src=audioCtx.createMediaElementSource(el);const analyser=audioCtx.createAnalyser();analyser.fftSize=256;src.connect(analyser);analyser.connect(audioCtx.destination);el.analyser=analyser;}
 
     // ---------- UI state ----------
-    let fontSizeVW=6;
+    let fontSizeVW=DEFAULT_FONT_VW_DESKTOP;
     const RED_BG='#ffecec',GREEN_BG='#ecffec',DARK_RED_BG='#330000',DARK_GREEN_BG='#003300';
 
     function setFontSize(){editor.style.fontSize=fontSizeVW+'vw';}
-    function adjustFontSizeToFit(){while(editor.scrollHeight>editor.clientHeight&&fontSizeVW>2){fontSizeVW=Math.max(fontSizeVW-.5,2);setFontSize();}}
+    function adjustFontSizeToFit(){
+      while(editor.scrollHeight>editor.clientHeight && fontSizeVW>2){
+        fontSizeVW=Math.max(fontSizeVW-.5,2);
+        setFontSize();
+      }
+    }
     function updateShortcuts(){
       let mode = shareSwitch.checked ? 'Share' : 'Solo';
-      let t = `Mode: ${mode} | Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom`;
-      if(readySwitch.checked)t='Ctrl+Enter: Cue | '+t;
+      let t;
+      if (isMobile) {
+        t = `Mode: ${mode} | Tap Clear: Reset | A-/A+: Zoom`;
+      } else {
+        t = `Mode: ${mode} | Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom`;
+        if(readySwitch.checked) t = 'Ctrl+Enter: Cue | ' + t;
+      }
       shortcuts.textContent=t;
     }
     function updateBg(){
@@ -114,12 +197,11 @@
     window.TotoTypeUI = window.TotoTypeUI || {};
     window.TotoTypeUI.onRemoteTextApplied = (remoteText) => {
       const txt = (typeof remoteText === 'string') ? remoteText : editor.innerText;
-      // If remote content is cleared, mirror the "clear resets font size" behavior
+      // If remote content is cleared, mirror the "clear resets font size" behavior (device-specific default)
       if (txt.trim() === '') {
-        fontSizeVW = 6;
+        fontSizeVW = defaultFontVW;
         setFontSize();
       }
-      // Otherwise: preserve whatever the viewer currently has, and only shrink-to-fit when needed
       adjustFontSizeToFit();
       refreshState();
     };
@@ -142,52 +224,84 @@
 
     function clearEditorAndReset(){
       document.execCommand('delete');
-      fontSizeVW=6;
+      fontSizeVW = defaultFontVW;
       setFontSize();
       refreshState();
     }
 
+    // ---------- Settings menu open/close (desktop + mobile modal overlay) ----------
+    function openSettings(){
+      settingsMenu.style.display='flex';
+      if (isMobile) settingsOverlay.style.display='block';
+    }
+    function closeSettings(){
+      settingsMenu.style.display='none';
+      settingsOverlay.style.display='none';
+    }
+
     // ---------- Share Mode toggle ----------
     async function setShareMode(on){
-      // Save whatever is currently in the editor into the correct place BEFORE switching views
       if (on) {
-        // going Solo -> Share: store solo content locally, then switch to shared pad
+        // Solo -> Share
         saveSoloText(editor.innerText);
-        // clear locally (prevents any accidental “copy over” feel)
         editor.innerText = '';
-        fontSizeVW = 6; setFontSize();
+        fontSizeVW = defaultFontVW; setFontSize();
         refreshState();
 
         if (window.FirebasePad?.enable) await window.FirebasePad.enable();
       } else {
-        // going Share -> Solo: stop sync FIRST, then restore solo content
+        // Share -> Solo
         if (window.FirebasePad?.disable) window.FirebasePad.disable();
         editor.innerText = loadSoloText();
-        fontSizeVW = 6; setFontSize();
+        fontSizeVW = defaultFontVW; setFontSize();
         adjustFontSizeToFit();
         refreshState();
       }
     }
 
     // ---------- Event wiring ----------
-    settingsBtn.addEventListener('click',()=>{settingsMenu.style.display=settingsMenu.style.display==='flex'?'none':'flex';});
-    doneBtn.addEventListener('click',()=>settingsMenu.style.display='none');
+    settingsBtn.addEventListener('click',()=>{
+      if(settingsMenu.style.display==='flex') closeSettings();
+      else openSettings();
+    });
+    settingsOverlay.addEventListener('click', closeSettings);
+    doneBtn.addEventListener('click', closeSettings);
 
-    darkSwitch.addEventListener('change',()=>{darkSwitch.checked?body.classList.add('dark-mode'):body.classList.remove('dark-mode');refreshState();});
+    darkSwitch.addEventListener('change',()=>{
+      darkSwitch.checked?body.classList.add('dark-mode'):body.classList.remove('dark-mode');
+      refreshState();
+    });
     readySwitch.addEventListener('change',refreshState);
 
+    // Show images still exists (desktop); on mobile default OFF and hidden in settings
     imagesSwitch.addEventListener('change',()=>toggleImages(imagesSwitch.checked));
 
     shareSwitch.addEventListener('change', async () => {
       await setShareMode(shareSwitch.checked);
       editor.focus();
+      refreshState();
     });
 
     zoomInBtn.addEventListener('click',()=>{fontSizeVW=Math.min(fontSizeVW+1,20);setFontSize();editor.focus();});
     zoomOutBtn.addEventListener('click',()=>{fontSizeVW=Math.max(fontSizeVW-1,2);setFontSize();editor.focus();});
 
+    // Mobile clear button (also useful on desktop)
+    clearBtn.addEventListener('click', async ()=>{
+      editor.focus();
+      document.execCommand('selectAll');
+      clearEditorAndReset();
+
+      // persist/sync
+      if (shareSwitch.checked) {
+        if (window.FirebasePad?.setText) {
+          try { await window.FirebasePad.setText(''); } catch {}
+        }
+      } else {
+        saveSoloText(editor.innerText);
+      }
+    });
+
     editor.addEventListener('input',()=>{
-      // Persist Solo typing only when NOT in Share mode
       if (!shareSwitch.checked) saveSoloText(editor.innerText);
       adjustFontSizeToFit();
       refreshState();
@@ -203,12 +317,11 @@
         e.preventDefault();
         document.execCommand('selectAll');
         clearEditorAndReset();
-        // also persist if in solo
         if (!shareSwitch.checked) saveSoloText(editor.innerText);
         return;
       }
 
-      // Select-all (Ctrl/Cmd+A or any full selection) then Backspace/Delete => clear + reset
+      // Select-all then Backspace/Delete => clear + reset
       const isDeleteKey = (e.key==='Backspace' || e.key==='Delete');
       if(isDeleteKey && document.activeElement===editor && selectionCoversAll(editor)){
         e.preventDefault();
@@ -266,14 +379,28 @@
     // ---------- init ----------
     window.onload=()=>{
       editor.focus();
-      // default to Solo on load (safer). Restore solo draft.
+
+      // default to Solo on load (safer)
       shareSwitch.checked=false;
+
+      // Mobile defaults
+      defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
+      fontSizeVW = defaultFontVW;
+
+      // Mobile: Show Images OFF by default
+      if (isMobile) {
+        imagesSwitch.checked=false;
+        toggleImages(false);
+      } else {
+        toggleImages(imagesSwitch.checked);
+      }
+
       editor.innerText = loadSoloText();
       if (darkSwitch.checked) body.classList.add('dark-mode');
-      refreshState();
-      toggleImages(true);
+
       setFontSize();
       adjustFontSizeToFit();
+      refreshState();
     };
   </script>
 
@@ -307,7 +434,6 @@
       db = getDatabase(app);
       padRef = ref(db, "sharedPad/text");
 
-      // keep these available for inner closures without re-importing
       window.__fb_set = set;
       window.__fb_onValue = onValue;
     }
@@ -342,19 +468,31 @@
       try { el.focus(); } catch {}
     }
 
+    async function setText(text){
+      await ensureFirebase();
+      const { set } = window.__fb_set ? { set: window.__fb_set } : {};
+      try { await set(padRef, text ?? ""); } catch (e) { console.error(e); }
+    }
+
     async function enable(){
       await ensureFirebase();
-      if (unsub) return; // already enabled
+      if (unsub) return;
 
       const editorEl = document.getElementById("editor");
       const { set, onValue } = window.__fb_set ? { set: window.__fb_set, onValue: window.__fb_onValue } : {};
 
-      // Attach listener
       unsub = onValue(padRef, (snap) => {
         const remoteText = snap.val() ?? "";
         const current = editorEl.innerText;
 
-        if (remoteText === current) return;
+        if (remoteText === current) {
+          // Even if equal, a clear might need to reset font size on this device in edge cases.
+          // Only do this when content is empty to avoid extra work.
+          if ((remoteText ?? "").trim() === "") {
+            try { window.TotoTypeUI?.onRemoteTextApplied?.(remoteText); } catch {}
+          }
+          return;
+        }
 
         const focused = (document.activeElement === editorEl);
         const caret = focused ? getCaretOffset(editorEl) : null;
@@ -363,7 +501,6 @@
         editorEl.innerText = remoteText;
         applyingRemote = false;
 
-        // IMPORTANT: apply auto-fit AND "clear resets size" on remote updates
         try { window.TotoTypeUI?.onRemoteTextApplied?.(remoteText); } catch {}
 
         if (focused && caret !== null) {
@@ -371,7 +508,6 @@
         }
       });
 
-      // Attach writer (only while share enabled)
       inputHandler = () => {
         if (applyingRemote) return;
         clearTimeout(writeTimer);
@@ -398,6 +534,7 @@
     window.FirebasePad = {
       enable,
       disable,
+      setText,
       isEnabled: () => !!unsub
     };
   </script>
