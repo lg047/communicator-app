@@ -219,14 +219,14 @@
         height:100%;
       }
 
-      /* Settings modal */
+      /* Settings modal (✅ slightly taller to avoid scrolling now that Mute exists) */
       #settingsMenu{
         left:16px;
         right:16px;
         top:50%;
         transform:translateY(-50%);
         width:auto;
-        max-height:42vh;
+        max-height:55vh;     /* was 42vh */
         overflow:auto;
         border-radius:22px;
         padding:10px 10px 10px;
@@ -341,7 +341,7 @@
   <audio id="pipiSound" data-src="pipi.wav" preload="none"></audio>
   <audio id="jpSound" data-src="jp.wav" preload="none"></audio>
 
-  <!-- Ring audio (preload none so it won't fetch until needed) -->
+  <!-- Ring audio -->
   <audio id="chimeSound" src="chime.wav" preload="none"></audio>
 
   <script>
@@ -451,9 +451,10 @@
       refreshModeLabel();
     }
 
-    // ---------- Editor editability by mode ----------
+    // ---------- Editor editability + button visibility by mode ----------
     function applyEditorByMode(){
       const mode = currentMode();
+
       if (mode === 'viewer') {
         editor.blur();
         editor.setAttribute('contenteditable','false');
@@ -464,9 +465,12 @@
       }
 
       // Clear button visible only when NOT viewer
-      if (mobileClear) {
-        mobileClear.style.display = (mode === 'viewer') ? 'none' : '';
-      }
+      if (mobileClear) mobileClear.style.display = (mode === 'viewer') ? 'none' : '';
+
+      // ✅ Ring button hidden entirely in Viewer mode (desktop + mobile)
+      const ringDisplay = (mode === 'viewer') ? 'none' : '';
+      ringBtn.style.display = ringDisplay;
+      if (mobileRing && mobileRing.parentElement) mobileRing.parentElement.style.display = ringDisplay;
     }
 
     // ---------- Media lazy-load (desktop only; mobile/tablet skips) ----------
@@ -570,11 +574,11 @@
         chimeAudio.currentTime = 0;
         await chimeAudio.play();
       }catch{
-        // iOS may still block until a gesture; ring press counts, but if blocked we just ignore.
+        // iOS may still block until a gesture
       }
     }
 
-    // Remote ring event handler (only active in share/view modes)
+    // Remote ring event handler
     window.TotoTypeUI = window.TotoTypeUI || {};
     window.TotoTypeUI.onRingEvent = async (ev) => {
       if (!ev || !ev.id) return;
@@ -608,7 +612,7 @@
       clearEditorAndReset();
       if (shareSwitch.checked) {
         if (window.FirebasePad?.setText) {
-          try { await window.FirebasePad.setText(''); } catch {}
+          try { await window.FirebasePad.setText(''); } catch (e) { console.error(e); }
         }
       } else {
         saveSoloText(editor.innerText);
@@ -682,6 +686,10 @@
       applyEditorByMode();
       if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:true });
       if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(true);
+
+      // ✅ unlock chime on mode switch gesture
+      await unlockChime();
+
       refreshState();
     }
 
@@ -699,6 +707,10 @@
       applyEditorByMode();
       if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:false });
       if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(false);
+
+      // ✅ unlock chime on mode switch gesture
+      await unlockChime();
+
       refreshState();
     }
 
@@ -714,6 +726,7 @@
           applyEditorByMode();
           if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:true });
           if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(true);
+          await unlockChime();
           refreshState();
         }
       } else if (mode === 'viewer') {
@@ -722,6 +735,7 @@
           applyEditorByMode();
           if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:false });
           if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(false);
+          await unlockChime();
           refreshState();
         }
       }
@@ -746,9 +760,7 @@
       refreshState();
     });
 
-    muteSwitch.addEventListener('change',()=>{
-      setMuted(muteSwitch.checked);
-    });
+    muteSwitch.addEventListener('change',()=> setMuted(muteSwitch.checked));
 
     imagesSwitch.addEventListener('change',()=> toggleImages(imagesSwitch.checked));
 
@@ -783,10 +795,8 @@
     });
 
     // Desktop zoom buttons
-    if (zoomInBtn && zoomOutBtn){
-      zoomInBtn.addEventListener('click',()=>{ fontSizeVW=Math.min(fontSizeVW+1,20); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
-      zoomOutBtn.addEventListener('click',()=>{ fontSizeVW=Math.max(fontSizeVW-1,2); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
-    }
+    zoomInBtn.addEventListener('click',()=>{ fontSizeVW=Math.min(fontSizeVW+1,20); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
+    zoomOutBtn.addEventListener('click',()=>{ fontSizeVW=Math.max(fontSizeVW-1,2); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
 
     // Mobile clear button
     mobileClear.addEventListener('click', clearAndPropagate);
@@ -796,20 +806,30 @@
       await unlockChime();
 
       const mode = currentMode();
+
       if (mode === 'solo') {
         // Solo: ONLY local play (no broadcast)
         await playChime();
         return;
       }
 
-      // Share/Viewer: broadcast + local instant play (dedup via lastSentRingId)
+      // Share: broadcast + local instant play
+      // Viewer: (button hidden, but safeguard anyway) do nothing
+      if (mode === 'viewer') return;
+
       const ringId = makeId(10);
       lastSentRingId = ringId;
 
       await playChime();
 
       if (window.FirebasePad?.ring) {
-        try { await window.FirebasePad.ring({ id: ringId, t: Date.now(), sender: clientId }); } catch {}
+        try {
+          await window.FirebasePad.ring({ id: ringId, t: Date.now(), sender: clientId });
+        } catch (e) {
+          console.error("Ring write failed:", e);
+        }
+      } else {
+        console.error("FirebasePad.ring not available (are you in Share mode and connected?)");
       }
     }
 
@@ -843,6 +863,7 @@
 
       editor.innerText = loadSoloText();
       adjustFontSizeToFit();
+
       applyEditorByMode();
 
       if (darkSwitch.checked) body.classList.add('dark-mode');
@@ -955,7 +976,7 @@
     async function ring(ev){
       await ensureFirebase();
       const { set } = window.__fb_set ? { set: window.__fb_set } : {};
-      try { await set(ringRef, ev); } catch (e) { console.error(e); }
+      try { await set(ringRef, ev); } catch (e) { console.error("RTDB ring write error:", e); throw e; }
     }
 
     async function enable(opts={writable:true}){
