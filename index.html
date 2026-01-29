@@ -100,26 +100,53 @@
       cursor:pointer;color:inherit
     }
 
-    /* Desktop footer controls */
-    #controls{
-      position:fixed;bottom:10px;right:10px;
-      background:rgba(255,255,255,.7);
-      padding:5px;border-radius:5px;
-      display:flex;gap:5px;z-index:1000
+    /* ---------- Desktop footer: centered mode + zoom ---------- */
+    #footerBar{
+      position:fixed;
+      left:50%;
+      bottom:12px;
+      transform:translateX(-50%);
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:8px 12px;
+      border-radius:10px;
+      background:rgba(255,255,255,.65);
+      color:#333;
+      z-index:1000;
+      user-select:none;
+      pointer-events:none; /* footer is informational; buttons will override */
     }
-    body.dark-mode #controls{background:rgba(0,0,0,.7)}
-    #controls button{
-      font-size:1rem;padding:.2em .5em;border:none;border-radius:3px;
-      background:none;color:inherit;cursor:pointer
+    body.dark-mode #footerBar{
+      background:rgba(0,0,0,.6);
+      color:#ddd;
     }
-    #shortcuts{
-      position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
-      background:rgba(255,255,255,.6);
-      padding:4px 6px;border-radius:4px;
-      font-size:.8rem;color:#333;
-      pointer-events:none;z-index:1000
+    #modeLabel{
+      font-size:.95rem;
+      pointer-events:none;
+      white-space:nowrap;
     }
-    body.dark-mode #shortcuts{background:rgba(0,0,0,.6);color:#ddd}
+    #zoomGroup{
+      display:flex;
+      gap:8px;
+      pointer-events:auto; /* enable button clicks */
+    }
+    #zoomGroup button{
+      font-size:1.1rem;
+      padding:.35em .7em;
+      border:none;
+      border-radius:8px;
+      background:rgba(255,255,255,.85);
+      cursor:pointer;
+      color:inherit;
+    }
+    body.dark-mode #zoomGroup button{
+      background:rgba(0,0,0,.55);
+      color:inherit;
+    }
+
+    /* Keep old elements around for compatibility; hide on desktop now */
+    #controls, #shortcuts { display:none; }
 
     #dog,#jpHead{position:fixed;bottom:0;height:240px;pointer-events:auto;cursor:pointer;transition:transform .05s linear,filter .1s}
     #jpHead{right:0;height:225px}
@@ -137,7 +164,7 @@
         justify-content:flex-end;
       }
 
-      /* Clear + Gear sizes (kept as requested) */
+      /* Clear + Gear sizes (kept) */
       #mobileClear{
         width:auto;
         padding:14px 18px;
@@ -151,9 +178,8 @@
         border-radius:999px;
       }
 
-      /* Remove footer on mobile */
-      #controls{display:none !important;}
-      #shortcuts{display:none !important;}
+      /* Hide desktop footer on mobile */
+      #footerBar{display:none !important;}
 
       /* Leave room for top bar */
       #editor{
@@ -161,7 +187,7 @@
         height:100%;
       }
 
-      /* Settings modal: slightly smaller */
+      /* Settings modal */
       #settingsMenu{
         left:16px;
         right:16px;
@@ -177,8 +203,7 @@
         box-shadow:0 16px 48px rgba(0,0,0,.32);
       }
 
-      /* Hide options you don't want on mobile */
-      #cueItem{display:none !important;}
+      /* Hide images toggle on mobile (as before) */
       #imagesItem{display:none !important;}
 
       .settings-item{
@@ -228,16 +253,6 @@
       <label class="switch"><input type="checkbox" id="darkSwitch"><span class="slider"></span></label>
     </div>
 
-    <div class="settings-item" id="cueItem">
-      <span class="switch-label">Cue Mode</span>
-      <label class="switch"><input type="checkbox" id="readySwitch"><span class="slider"></span></label>
-    </div>
-
-    <div class="settings-item" id="imagesItem">
-      <span class="switch-label">Show Images</span>
-      <label class="switch"><input type="checkbox" id="imagesSwitch" checked><span class="slider"></span></label>
-    </div>
-
     <div class="settings-item" id="shareItem">
       <span class="switch-label">Share Mode</span>
       <label class="switch"><input type="checkbox" id="shareSwitch"><span class="slider"></span></label>
@@ -248,13 +263,27 @@
       <label class="switch"><input type="checkbox" id="viewerSwitch"><span class="slider"></span></label>
     </div>
 
+    <div class="settings-item" id="imagesItem">
+      <span class="switch-label">Show Images</span>
+      <label class="switch"><input type="checkbox" id="imagesSwitch" checked><span class="slider"></span></label>
+    </div>
+
     <button id="doneBtn">Done</button>
   </div>
 
   <div id="editor" contenteditable="true" spellcheck="false"></div>
 
-  <!-- Desktop footer controls -->
-  <div id="controls"><button id="zoomOut">A-</button><button id="zoomIn">A+</button></div>
+  <!-- Desktop footer -->
+  <div id="footerBar">
+    <div id="modeLabel">Mode: Solo</div>
+    <div id="zoomGroup">
+      <button id="zoomOut" aria-label="Zoom out">A-</button>
+      <button id="zoomIn" aria-label="Zoom in">A+</button>
+    </div>
+  </div>
+
+  <!-- Keep old elements hidden (compat) -->
+  <div id="controls"><button id="zoomOutOld">A-</button><button id="zoomInOld">A+</button></div>
   <div id="shortcuts"></div>
 
   <!-- Media: DO NOT set src attributes here -->
@@ -277,14 +306,13 @@
     const mobileClear=document.getElementById('mobileClear');
 
     const darkSwitch=document.getElementById('darkSwitch');
-    const readySwitch=document.getElementById('readySwitch');
     const imagesSwitch=document.getElementById('imagesSwitch');
     const shareSwitch=document.getElementById('shareSwitch');
     const viewerSwitch=document.getElementById('viewerSwitch');
 
     const zoomInBtn=document.getElementById('zoomIn');
     const zoomOutBtn=document.getElementById('zoomOut');
-    const shortcuts=document.getElementById('shortcuts');
+    const modeLabel=document.getElementById('modeLabel');
 
     const dog=document.getElementById('dog');
     const jpHead=document.getElementById('jpHead');
@@ -310,8 +338,6 @@
     let defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
     let fontSizeVW = defaultFontVW;
 
-    const RED_BG='#ffecec',GREEN_BG='#ecffec',DARK_RED_BG='#330000',DARK_GREEN_BG='#003300';
-
     function setFontSize(){ editor.style.fontSize = fontSizeVW+'vw'; }
     function adjustFontSizeToFit(){
       while(editor.scrollHeight > editor.clientHeight && fontSizeVW > 2){
@@ -326,27 +352,14 @@
       return 'solo';
     }
 
-    function updateShortcuts(){
-      if (isMobile) { shortcuts.textContent = ''; return; }
+    function refreshModeLabel(){
       const mode = currentMode();
-      let t = `Mode: ${mode[0].toUpperCase()+mode.slice(1)} | Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom`;
-      if(mode==='viewer') t = `Mode: Viewer | Read-only`;
-      if(readySwitch.checked && mode!=='viewer') t='Ctrl+Enter: Cue | '+t;
-      shortcuts.textContent=t;
-    }
-
-    function updateBg(){
-      if(readySwitch.checked){
-        body.style.backgroundColor = darkSwitch.checked ? DARK_RED_BG : RED_BG;
-      }else{
-        body.style.backgroundColor = darkSwitch.checked ? '#000' : '#fff';
-      }
+      modeLabel.textContent = `Mode: ${mode[0].toUpperCase()+mode.slice(1)}`;
     }
 
     function refreshState(){
       editor.style.color = darkSwitch.checked ? '#fff' : '';
-      updateShortcuts();
-      updateBg();
+      refreshModeLabel();
     }
 
     // ---------- Editor editability by mode ----------
@@ -355,7 +368,7 @@
       if (mode === 'viewer') {
         editor.blur();
         editor.setAttribute('contenteditable','false');
-        editor.style.pointerEvents = 'auto'; // allow scrolling/selection if any
+        editor.style.pointerEvents = 'auto';
       } else {
         editor.setAttribute('contenteditable','true');
         editor.style.pointerEvents = 'auto';
@@ -465,7 +478,7 @@
     }
 
     async function clearAndPropagate(){
-      if (currentMode() === 'viewer') return; // viewer can't clear
+      if (currentMode() === 'viewer') return;
       clearEditorAndReset();
       if (shareSwitch.checked) {
         if (window.FirebasePad?.setText) {
@@ -487,7 +500,7 @@
         editor.style.pointerEvents = 'none';
       } else {
         editor.style.pointerEvents = 'auto';
-        applyEditorByMode(); // restore correct mode behavior
+        applyEditorByMode();
       }
     }
 
@@ -502,7 +515,6 @@
       settingsMenu.style.display='none';
       settingsOverlay.style.display='none';
       setEditorInteractiveWhileSettings(false);
-      // Don’t auto-focus on mobile (prevents keyboard popping up)
       if (!isMobile && currentMode() !== 'viewer') editor.focus();
     }
 
@@ -511,17 +523,16 @@
     settingsOverlay.addEventListener('click', closeSettings);
     doneBtn.addEventListener('click', closeSettings);
 
-    // Prevent stray taps from focusing editor when settings open (iOS)
     document.addEventListener('touchstart', (e)=>{
       if (!settingsOpen) return;
       if (e.target === editor) { e.preventDefault(); e.stopPropagation(); }
     }, {passive:false});
 
     // ---------- Mode transitions ----------
+    let prevMode = 'solo';
+
     async function toSolo(){
-      // stop sync
       if (window.FirebasePad?.disable) window.FirebasePad.disable();
-      // restore solo draft
       editor.innerText = loadSoloText();
       fontSizeVW = defaultFontVW; setFontSize();
       adjustFontSizeToFit();
@@ -565,32 +576,6 @@
       refreshState();
     }
 
-    // ---------- Toggles ----------
-    darkSwitch.addEventListener('change',()=>{
-      darkSwitch.checked ? body.classList.add('dark-mode') : body.classList.remove('dark-mode');
-      refreshState();
-    });
-
-    readySwitch.addEventListener('change', refreshState);
-
-    imagesSwitch.addEventListener('change',()=> toggleImages(imagesSwitch.checked));
-
-    // Share / Viewer are mutually exclusive
-    shareSwitch.addEventListener('change', async ()=>{
-      const wasSolo = (!viewerSwitch.checked && !shareSwitch.checked);
-      if (shareSwitch.checked) {
-        viewerSwitch.checked = false;
-        // if we were solo before toggling, wasSolo is false now; compute explicitly:
-        const fromSolo = (viewerSwitch.checked===false) && (shareSwitch.checked===true) && (window.FirebasePad?.isEnabled?.() !== true) && (currentMode() === 'share') && (loadSoloText() !== null);
-        // better explicit: solo if viewer unchecked AND share checked just switched on AND Firebase not enabled previously
-        // We'll approximate with: if previously neither share nor viewer checked.
-        // We'll track previous state more reliably:
-      }
-    });
-
-    // We'll use explicit previous state tracking for mode toggles:
-    let prevMode = 'solo';
-
     async function handleModeChange(){
       const mode = currentMode();
       if (mode === prevMode) { applyEditorByMode(); refreshState(); return; }
@@ -600,7 +585,6 @@
       } else if (mode === 'share') {
         if (prevMode === 'solo') await toShare(true);
         else {
-          // from viewer -> share: keep text, just make writable + editable
           applyEditorByMode();
           if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:true });
           if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(true);
@@ -609,7 +593,6 @@
       } else if (mode === 'viewer') {
         if (prevMode === 'solo') await toViewer(true);
         else {
-          // from share -> viewer: keep text, just make read-only + no writes
           applyEditorByMode();
           if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:false });
           if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(false);
@@ -618,19 +601,26 @@
       }
 
       prevMode = mode;
-      // prevent iOS keyboard popping if viewer
       if (isMobile || mode === 'viewer') editor.blur();
     }
 
+    // Share / Viewer mutually exclusive
     shareSwitch.addEventListener('change', async ()=>{
       if (shareSwitch.checked) viewerSwitch.checked = false;
       await handleModeChange();
     });
-
     viewerSwitch.addEventListener('change', async ()=>{
       if (viewerSwitch.checked) shareSwitch.checked = false;
       await handleModeChange();
     });
+
+    // ---------- Toggles ----------
+    darkSwitch.addEventListener('change',()=>{
+      darkSwitch.checked ? body.classList.add('dark-mode') : body.classList.remove('dark-mode');
+      refreshState();
+    });
+
+    imagesSwitch.addEventListener('change',()=> toggleImages(imagesSwitch.checked));
 
     // ---------- Input handling ----------
     editor.addEventListener('input',()=>{
@@ -645,11 +635,6 @@
       if (isMobile) return;
       if (currentMode() === 'viewer') return;
 
-      if(readySwitch.checked && e.ctrlKey && e.key==='Enter'){
-        e.preventDefault();
-        body.style.backgroundColor = darkSwitch.checked ? DARK_GREEN_BG : GREEN_BG;
-        editor.focus();
-      }
       if(e.ctrlKey && e.key==='Backspace'){
         e.preventDefault();
         clearAndPropagate();
@@ -678,7 +663,6 @@
 
     // ---------- init ----------
     window.onload=()=>{
-      // default to Solo on load
       shareSwitch.checked = false;
       viewerSwitch.checked = false;
       prevMode = 'solo';
@@ -687,7 +671,6 @@
       fontSizeVW = defaultFontVW;
       setFontSize();
 
-      // Mobile: skip media. Desktop: images ON by default.
       if (isMobile) {
         imagesSwitch.checked = false;
         toggleImages(false);
@@ -701,7 +684,6 @@
       applyEditorByMode();
       refreshState();
 
-      // Keep keyboard closed initially on mobile
       if (isMobile) editor.blur();
       else editor.focus();
     };
@@ -847,13 +829,10 @@
     }
 
     function disable(){
-      const editorEl = document.getElementById("editor");
       detachWriter();
       if (unsub) { try { unsub(); } catch {} }
       unsub = null;
       applyingRemote=false;
-      // leave editor text as-is
-      if (editorEl) {}
     }
 
     function isEnabled(){ return !!unsub; }
