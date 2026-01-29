@@ -125,7 +125,7 @@
     #jpHead{right:0;height:225px}
     #dog.pressed,#jpHead.pressed{filter:brightness(.8)}
 
-    /* ---------- Mobile / iOS UI: sane big, centered modal, no background typing ---------- */
+    /* ---------- Mobile / iOS UI ---------- */
     @media (max-width: 900px), (pointer: coarse) {
       /* Use mobile top bar instead of desktop gear */
       #settingsBtn{display:none;}
@@ -137,15 +137,13 @@
         justify-content:flex-end;
       }
 
-      /* Clear: snug pill that fits text */
+      /* Clear + Gear sizes (UNCHANGED) */
       #mobileClear{
         width:auto;
         padding:14px 18px;
         font-size:2.0rem;
         border-radius:22px;
       }
-
-      /* Gear: small round icon button */
       #mobileGear{
         width:auto;
         padding:12px 14px;
@@ -153,7 +151,7 @@
         border-radius:999px;
       }
 
-      /* Remove footer on mobile entirely */
+      /* Remove footer on mobile */
       #controls{display:none !important;}
       #shortcuts{display:none !important;}
 
@@ -163,51 +161,49 @@
         height:100%;
       }
 
-      /* Settings modal: smaller, vertically centered */
+      /* ✅ Settings modal: ~25% smaller (box + contents) */
       #settingsMenu{
         left:16px;
         right:16px;
         top:50%;
         transform:translateY(-50%);
         width:auto;
-        max-height:52vh;
+
+        max-height:42vh;          /* smaller than before */
         overflow:auto;
-        border-radius:26px;
-        padding:14px 14px 12px;
-        box-shadow:0 18px 55px rgba(0,0,0,.35);
+
+        border-radius:22px;       /* slightly smaller corners */
+        padding:10px 10px 10px;   /* tighter */
+        box-shadow:0 16px 48px rgba(0,0,0,.32);
       }
 
       /* Hide options you don't want on mobile */
       #cueItem{display:none !important;}
       #imagesItem{display:none !important;}
 
-      /* Big tap zones */
       .settings-item{
         margin:0;
-        padding:14px 6px;
+        padding:10px 4px;         /* smaller rows */
       }
 
-      /* Big labels */
       .switch-label{
-        font-size:2.2rem;
+        font-size:1.65rem;        /* ~25% smaller than 2.2rem */
         line-height:1.15;
       }
 
-      /* Big switches */
-      .switch{width:132px;height:68px}
-      .slider{border-radius:68px}
+      .switch{width:110px;height:56px}
+      .slider{border-radius:56px}
       .slider:before{
-        width:58px;height:58px;
-        left:5px;bottom:5px;
+        width:48px;height:48px;
+        left:4px;bottom:4px;
       }
-      input:checked + .slider:before{transform:translateX(58px)}
+      input:checked + .slider:before{transform:translateX(50px)}
 
-      /* Big Done button */
       #doneBtn{
-        margin-top:16px;
-        font-size:2.2rem;
-        padding:18px 16px;
-        border-radius:22px;
+        margin-top:12px;
+        font-size:1.65rem;
+        padding:12px 12px;
+        border-radius:18px;
         border-width:2px;
       }
     }
@@ -252,7 +248,7 @@
 
   <div id="editor" contenteditable="true" spellcheck="false"></div>
 
-  <!-- Desktop footer controls (hidden on mobile) -->
+  <!-- Desktop footer controls -->
   <div id="controls"><button id="zoomOut">A-</button><button id="zoomIn">A+</button></div>
   <div id="shortcuts"></div>
 
