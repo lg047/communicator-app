@@ -110,10 +110,16 @@
       updateBg();
     }
 
-    // ----- NEW: expose a tiny hook so Firebase remote updates can trigger the same auto-fit behavior -----
+    // ----- Hook so Firebase remote updates trigger the same auto-fit + ALSO reset size on remote clears -----
     window.TotoTypeUI = window.TotoTypeUI || {};
-    window.TotoTypeUI.onRemoteTextApplied = () => {
-      // Do NOT reset fontSizeVW here; just apply the same "shrink to fit" logic.
+    window.TotoTypeUI.onRemoteTextApplied = (remoteText) => {
+      const txt = (typeof remoteText === 'string') ? remoteText : editor.innerText;
+      // If remote content is cleared, mirror the "clear resets font size" behavior
+      if (txt.trim() === '') {
+        fontSizeVW = 6;
+        setFontSize();
+      }
+      // Otherwise: preserve whatever the viewer currently has, and only shrink-to-fit when needed
       adjustFontSizeToFit();
       refreshState();
     };
@@ -333,14 +339,7 @@
         }
         count = next;
       }
-      // if no text nodes, just focus element
       try { el.focus(); } catch {}
-    }
-
-    onRemoteApplied();
-
-    function onRemoteApplied(){
-      try { window.TotoTypeUI?.onRemoteTextApplied?.(); } catch {}
     }
 
     async function enable(){
@@ -364,8 +363,8 @@
         editorEl.innerText = remoteText;
         applyingRemote = false;
 
-        // IMPORTANT: apply the same auto-fit behavior on remote updates
-        onRemoteApplied();
+        // IMPORTANT: apply auto-fit AND "clear resets size" on remote updates
+        try { window.TotoTypeUI?.onRemoteTextApplied?.(remoteText); } catch {}
 
         if (focused && caret !== null) {
           try { setCaretOffset(editorEl, Math.min(caret, editorEl.innerText.length)); } catch {}
@@ -382,9 +381,6 @@
         }, 80);
       };
       editorEl.addEventListener("input", inputHandler);
-
-      // When enabling, the onValue callback will fire with current remote state;
-      // no extra work needed here.
     }
 
     function disable(){
@@ -407,4 +403,3 @@
   </script>
 </body>
 </html>
-
