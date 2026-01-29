@@ -32,21 +32,44 @@
       color:inherit
     }
 
-    /* Desktop gear */
-    #settingsBtn{
-      position:fixed;top:20px;right:20px;
+    /* Desktop buttons */
+    #settingsBtn, #ringBtn{
+      position:fixed;top:20px;
       background:none;border:none;
       font-size:4rem;cursor:pointer;color:#888;
-      z-index:1003
+      z-index:1003;
+      padding:0;
+      line-height:1;
+    }
+    #settingsBtn{right:20px}
+    #ringBtn{left:20px}
+
+    /* Bell icon styling */
+    .iconBtn svg{
+      width:3.2rem;height:3.2rem;
+      stroke:currentColor;
+      fill:none;
+      stroke-width:2.2;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      vertical-align:middle;
     }
 
-    /* Mobile top bar (Clear + Gear) */
-    #mobileTopBar{
+    /* Mobile fixed buttons (ring on left; clear+gear on right) */
+    #mobileTopRight{
       position:fixed;
       top:12px;
       right:12px;
       display:none;
       gap:10px;
+      z-index:1004;
+      align-items:center;
+    }
+    #mobileRingWrap{
+      position:fixed;
+      top:12px;
+      left:12px;
+      display:none;
       z-index:1004;
       align-items:center;
     }
@@ -80,7 +103,7 @@
       display:none;flex-direction:column;
       padding:12px;
       box-shadow:0 2px 8px rgba(0,0,0,.18);
-      z-index:1002;width:260px
+      z-index:1002;width:280px
     }
     body.dark-mode #settingsMenu{background:rgba(0,0,0,.9);border-color:#444}
 
@@ -154,34 +177,43 @@
 
     /* ---------- Mobile / iOS UI (treat iPad/tablet as mobile too) ---------- */
     @media (max-width: 900px), (pointer: coarse) {
-      /* Use mobile top bar instead of desktop gear */
-      #settingsBtn{display:none;}
-      #mobileTopBar{
+      /* Hide desktop corner buttons */
+      #settingsBtn, #ringBtn{display:none;}
+
+      /* Show mobile buttons */
+      #mobileTopRight{
         display:flex;
         top:calc(14px + env(safe-area-inset-top));
         right:14px;
         gap:16px;
         justify-content:flex-end;
       }
-
-      /* Clear + Gear sizes (kept) */
-      #mobileClear{
-        width:auto;
-        padding:14px 18px;
-        font-size:2.0rem;
-        border-radius:22px;
+      #mobileRingWrap{
+        display:flex;
+        top:calc(14px + env(safe-area-inset-top));
+        left:14px;
       }
-      #mobileGear{
+
+      /* Ring button = same size as mobile settings button */
+      #mobileRing, #mobileGear{
         width:auto;
         padding:12px 14px;
         font-size:2.2rem;
         border-radius:999px;
       }
 
+      /* Clear (unchanged) */
+      #mobileClear{
+        width:auto;
+        padding:14px 18px;
+        font-size:2.0rem;
+        border-radius:22px;
+      }
+
       /* Hide desktop footer on mobile */
       #footerBar{display:none !important;}
 
-      /* Leave room for top bar */
+      /* Leave room for top buttons */
       #editor{
         padding:140px 22px;
         height:100%;
@@ -194,10 +226,8 @@
         top:50%;
         transform:translateY(-50%);
         width:auto;
-
         max-height:42vh;
         overflow:auto;
-
         border-radius:22px;
         padding:10px 10px 10px;
         box-shadow:0 16px 48px rgba(0,0,0,.32);
@@ -210,12 +240,10 @@
         margin:0;
         padding:10px 4px;
       }
-
       .switch-label{
         font-size:1.65rem;
         line-height:1.15;
       }
-
       .switch{width:110px;height:56px}
       .slider{border-radius:56px}
       .slider:before{
@@ -223,7 +251,6 @@
         left:4px;bottom:4px;
       }
       input:checked + .slider:before{transform:translateX(50px)}
-
       #doneBtn{
         margin-top:12px;
         font-size:1.65rem;
@@ -231,19 +258,36 @@
         border-radius:18px;
         border-width:2px;
       }
+
+      /* Make bell SVG match the emoji size */
+      #mobileRing svg{width:2.2rem;height:2.2rem;stroke:currentColor}
     }
   </style>
 </head>
 
 <body>
-  <!-- Mobile top bar -->
-  <div id="mobileTopBar">
+  <!-- Desktop corner buttons -->
+  <button id="ringBtn" class="iconBtn" aria-label="Ring">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"/>
+      <path d="M13.73 21a2 2 0 01-3.46 0"/>
+    </svg>
+  </button>
+  <button id="settingsBtn" aria-label="Settings">⚙</button>
+
+  <!-- Mobile buttons: ring left; clear+gear right -->
+  <div id="mobileRingWrap">
+    <button class="topBtn" id="mobileRing" aria-label="Ring">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+    </button>
+  </div>
+  <div id="mobileTopRight">
     <button class="topBtn" id="mobileClear">Clear</button>
     <button class="topBtn" id="mobileGear" aria-label="Settings">⚙</button>
   </div>
-
-  <!-- Desktop gear -->
-  <button id="settingsBtn">⚙</button>
 
   <div id="settingsOverlay"></div>
 
@@ -251,6 +295,11 @@
     <div class="settings-item" id="darkItem">
       <span class="switch-label">Dark Mode</span>
       <label class="switch"><input type="checkbox" id="darkSwitch"><span class="slider"></span></label>
+    </div>
+
+    <div class="settings-item" id="muteItem">
+      <span class="switch-label">Mute Ring</span>
+      <label class="switch"><input type="checkbox" id="muteSwitch"><span class="slider"></span></label>
     </div>
 
     <div class="settings-item" id="shareItem">
@@ -292,20 +341,27 @@
   <audio id="pipiSound" data-src="pipi.wav" preload="none"></audio>
   <audio id="jpSound" data-src="jp.wav" preload="none"></audio>
 
+  <!-- Ring audio (preload none so it won't fetch until needed) -->
+  <audio id="chimeSound" src="chime.wav" preload="none"></audio>
+
   <script>
     // ---------- DOM refs ----------
     const body=document.body;
     const editor=document.getElementById('editor');
 
+    const ringBtn=document.getElementById('ringBtn');
     const settingsBtn=document.getElementById('settingsBtn');
+
+    const mobileRing=document.getElementById('mobileRing');
+    const mobileGear=document.getElementById('mobileGear');
+    const mobileClear=document.getElementById('mobileClear');
+
     const settingsMenu=document.getElementById('settingsMenu');
     const settingsOverlay=document.getElementById('settingsOverlay');
     const doneBtn=document.getElementById('doneBtn');
 
-    const mobileGear=document.getElementById('mobileGear');
-    const mobileClear=document.getElementById('mobileClear');
-
     const darkSwitch=document.getElementById('darkSwitch');
+    const muteSwitch=document.getElementById('muteSwitch');
     const imagesSwitch=document.getElementById('imagesSwitch');
     const shareSwitch=document.getElementById('shareSwitch');
     const viewerSwitch=document.getElementById('viewerSwitch');
@@ -319,26 +375,46 @@
     const pipiAudio=document.getElementById('pipiSound');
     const jpAudio=document.getElementById('jpSound');
 
+    const chimeAudio=document.getElementById('chimeSound');
+
     // ---------- Mobile/tablet detection (✅ iPad + tablets treated as mobile) ----------
     const isMobile = (() => {
       const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
       const touchPoints = navigator.maxTouchPoints || 0;
-
-      // iPadOS often reports as Mac; this catches it
       const isIPadLike = (navigator.platform === 'MacIntel' && touchPoints > 1);
-
-      // classic mobile UAs
       const ua = navigator.userAgent || '';
       const uaMobile = /iPhone|iPad|iPod|Android/i.test(ua);
-
-      // Treat ANY coarse-pointer touch device (incl. iPad/tablet) as mobile for media + UI logic
       return uaMobile || isIPadLike || (coarse && touchPoints > 0);
     })();
 
-    // ---------- Local-only storage (Solo mode) ----------
+    // ---------- Per-device IDs + settings ----------
+    const CLIENT_ID_KEY = 'tototype_client_id';
+    const MUTE_KEY = 'tototype_mute_ring';
     const SOLO_KEY = 'tototype_solo_text';
+
+    function makeId(len=10){
+      const chars='abcdefghijklmnopqrstuvwxyz0123456789';
+      let s='';
+      const arr=new Uint8Array(len);
+      crypto.getRandomValues(arr);
+      for(let i=0;i<len;i++) s+=chars[arr[i]%chars.length];
+      return s;
+    }
+
+    let clientId = localStorage.getItem(CLIENT_ID_KEY);
+    if (!clientId) {
+      clientId = makeId(12);
+      localStorage.setItem(CLIENT_ID_KEY, clientId);
+    }
+
     function loadSoloText(){ return localStorage.getItem(SOLO_KEY) ?? ''; }
     function saveSoloText(t){ localStorage.setItem(SOLO_KEY, t ?? ''); }
+
+    function isMuted(){ return localStorage.getItem(MUTE_KEY) === '1'; }
+    function setMuted(v){
+      localStorage.setItem(MUTE_KEY, v ? '1' : '0');
+      muteSwitch.checked = v;
+    }
 
     // ---------- UI state ----------
     const DEFAULT_FONT_VW_DESKTOP = 6;
@@ -393,7 +469,7 @@
       }
     }
 
-    // ---------- Media lazy-load (desktop only; ✅ iPad/tablet now counts as mobile so skips) ----------
+    // ---------- Media lazy-load (desktop only; mobile/tablet skips) ----------
     let mediaLoaded = false;
     function loadMediaIfNeeded(){
       if (mediaLoaded) return;
@@ -408,7 +484,6 @@
 
     function toggleImages(show){
       if (isMobile) {
-        // mobile/tablet: skip media entirely
         dog.style.display = 'none';
         jpHead.style.display = 'none';
         [pipiAudio, jpAudio].forEach(a=>{ try{a.pause();a.currentTime=0;}catch{} });
@@ -470,8 +545,45 @@
     addSoundEvents(dog,pipiAudio);
     addSoundEvents(jpHead,jpAudio);
 
-    // ---------- Remote update hook ----------
+    // ---------- Ring: play + mute + dedupe ----------
+    let chimeUnlocked = false;
+    let lastSentRingId = null;
+
+    async function unlockChime(){
+      if (chimeUnlocked) return;
+      try{
+        chimeAudio.volume = 0;
+        await chimeAudio.play();
+        chimeAudio.pause();
+        chimeAudio.currentTime = 0;
+        chimeAudio.volume = 1;
+        chimeUnlocked = true;
+      }catch{
+        // Will unlock on a later gesture
+      }
+    }
+
+    async function playChime(){
+      if (isMuted()) return;
+      await unlockChime();
+      try{
+        chimeAudio.currentTime = 0;
+        await chimeAudio.play();
+      }catch{
+        // iOS may still block until a gesture; ring press counts, but if blocked we just ignore.
+      }
+    }
+
+    // Remote ring event handler (only active in share/view modes)
     window.TotoTypeUI = window.TotoTypeUI || {};
+    window.TotoTypeUI.onRingEvent = async (ev) => {
+      if (!ev || !ev.id) return;
+      // Avoid double-play on sender device if we already played locally immediately
+      if (ev.sender === clientId && lastSentRingId && ev.id === lastSentRingId) return;
+      await playChime();
+    };
+
+    // ---------- Remote update hook (text) ----------
     window.TotoTypeUI.onRemoteTextApplied = (remoteText) => {
       const txt = (typeof remoteText === 'string') ? remoteText : editor.innerText;
       if (txt.trim() === '') {
@@ -634,6 +746,10 @@
       refreshState();
     });
 
+    muteSwitch.addEventListener('change',()=>{
+      setMuted(muteSwitch.checked);
+    });
+
     imagesSwitch.addEventListener('change',()=> toggleImages(imagesSwitch.checked));
 
     // ---------- Input handling ----------
@@ -675,17 +791,48 @@
     // Mobile clear button
     mobileClear.addEventListener('click', clearAndPropagate);
 
+    // ---------- Ring button behavior ----------
+    async function ringPressed(){
+      await unlockChime();
+
+      const mode = currentMode();
+      if (mode === 'solo') {
+        // Solo: ONLY local play (no broadcast)
+        await playChime();
+        return;
+      }
+
+      // Share/Viewer: broadcast + local instant play (dedup via lastSentRingId)
+      const ringId = makeId(10);
+      lastSentRingId = ringId;
+
+      await playChime();
+
+      if (window.FirebasePad?.ring) {
+        try { await window.FirebasePad.ring({ id: ringId, t: Date.now(), sender: clientId }); } catch {}
+      }
+    }
+
+    ringBtn.addEventListener('click', ringPressed);
+    mobileRing.addEventListener('click', ringPressed);
+
+    // Also try to unlock audio on any first interaction
+    document.addEventListener('pointerdown', () => { unlockChime(); }, { once: true });
+
     // ---------- init ----------
     window.onload=()=>{
       shareSwitch.checked = false;
       viewerSwitch.checked = false;
       prevMode = 'solo';
 
+      // restore mute
+      setMuted(isMuted());
+
       defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
       fontSizeVW = defaultFontVW;
       setFontSize();
 
-      // ✅ mobile/tablet: skip media entirely, no need for setting
+      // ✅ mobile/tablet: skip media entirely
       if (isMobile) {
         imagesSwitch.checked = false;
         toggleImages(false);
@@ -723,21 +870,22 @@
       databaseURL: "https://tototype-8e5bf-default-rtdb.firebaseio.com/"
     };
 
-    let app=null, db=null, padRef=null;
-    let unsub=null;
+    let app=null, db=null, textRef=null, ringRef=null;
+    let unsubText=null, unsubRing=null;
     let applyingRemote=false;
     let writeTimer=null;
     let inputHandler=null;
     let writable=false;
 
     async function ensureFirebase(){
-      if (app && db && padRef) return;
+      if (app && db && textRef && ringRef) return;
       const { initializeApp } = await import(FIREBASE_APP_URL);
       const { getDatabase, ref, set, onValue } = await import(FIREBASE_DB_URL);
 
       app = initializeApp(firebaseConfig);
       db = getDatabase(app);
-      padRef = ref(db, "sharedPad/text");
+      textRef = ref(db, "sharedPad/text");
+      ringRef = ref(db, "sharedPad/ring");
 
       window.__fb_set = set;
       window.__fb_onValue = onValue;
@@ -754,7 +902,7 @@
         clearTimeout(writeTimer);
         const text = editorEl.innerText;
         writeTimer = setTimeout(async () => {
-          try { await set(padRef, text); } catch (e) { console.error(e); }
+          try { await set(textRef, text); } catch (e) { console.error(e); }
         }, 80);
       };
       editorEl.addEventListener("input", inputHandler);
@@ -801,7 +949,13 @@
     async function setText(text){
       await ensureFirebase();
       const { set } = window.__fb_set ? { set: window.__fb_set } : {};
-      try { await set(padRef, text ?? ""); } catch (e) { console.error(e); }
+      try { await set(textRef, text ?? ""); } catch (e) { console.error(e); }
+    }
+
+    async function ring(ev){
+      await ensureFirebase();
+      const { set } = window.__fb_set ? { set: window.__fb_set } : {};
+      try { await set(ringRef, ev); } catch (e) { console.error(e); }
     }
 
     async function enable(opts={writable:true}){
@@ -810,8 +964,9 @@
 
       const editorEl = document.getElementById("editor");
       const { onValue } = window.__fb_onValue ? { onValue: window.__fb_onValue } : {};
-      if (!unsub) {
-        unsub = onValue(padRef, (snap) => {
+
+      if (!unsubText) {
+        unsubText = onValue(textRef, (snap) => {
           const remoteText = snap.val() ?? "";
           const current = editorEl.innerText;
 
@@ -837,6 +992,14 @@
         });
       }
 
+      if (!unsubRing) {
+        unsubRing = onValue(ringRef, (snap) => {
+          const ev = snap.val();
+          if (!ev || !ev.id) return;
+          try { window.TotoTypeUI?.onRingEvent?.(ev); } catch {}
+        });
+      }
+
       if (writable) attachWriter();
       else detachWriter();
     }
@@ -849,17 +1012,22 @@
 
     function disable(){
       detachWriter();
-      if (unsub) { try { unsub(); } catch {} }
-      unsub = null;
+
+      if (unsubText) { try { unsubText(); } catch {} }
+      if (unsubRing) { try { unsubRing(); } catch {} }
+      unsubText = null;
+      unsubRing = null;
+
       applyingRemote=false;
     }
 
-    function isEnabled(){ return !!unsub; }
+    function isEnabled(){ return !!unsubText; }
 
     window.FirebasePad = {
       enable,
       disable,
       setText,
+      ring,
       setWritable,
       isEnabled
     };
