@@ -5,6 +5,15 @@
   <!-- ✅ critical for iPhone/iPad sizing + media queries -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
+  <!-- ✅ PWA / iOS "Add to Home Screen" -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TotoType" />
+  <link rel="apple-touch-icon" href="app_icon_1024.png" />
+  <link rel="icon" href="app_icon_1024.png" type="image/png" sizes="1024x1024" />
+
   <meta property="og:title" content="TotoType" />
   <meta property="og:description" content="A simple speech interface for fast communication." />
   <meta property="og:image" content="https://postimg.cc/F1sD5n4P" />
@@ -15,6 +24,11 @@
 
   <style>
     html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;transition:background-color .3s,color .3s}
+
+    /* ✅ Only selectable thing should be typed text */
+    body, body * { -webkit-user-select:none; user-select:none; }
+    #editor, #editor * { -webkit-user-select:text; user-select:text; }
+
     body.dark-mode{color:#fff;background:#000}
     body.dark-mode #editor{color:#fff}
 
@@ -325,6 +339,13 @@
   <audio id="chimeSound" src="chime.wav" preload="none"></audio>
 
   <script>
+    // ✅ Register service worker (needed for installable PWA on Chrome/Android)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(()=>{});
+      });
+    }
+
     const body=document.body;
     const editor=document.getElementById('editor');
 
@@ -370,7 +391,7 @@
     const CLIENT_ID_KEY = 'tototype_client_id';
     const MUTE_KEY = 'tototype_mute_ring';
     const SOLO_KEY = 'tototype_solo_text';
-    const LAST_RING_SEEN_KEY = 'tototype_last_ring_seen'; // ✅ new: suppress initial ring snapshot
+    const LAST_RING_SEEN_KEY = 'tototype_last_ring_seen';
 
     function makeId(len=10){
       const chars='abcdefghijklmnopqrstuvwxyz0123456789';
@@ -510,7 +531,6 @@
       }catch{}
     }
 
-    // ✅ per-device last-seen ring id to avoid random chime on attach/reconnect
     function getLastRingSeen(){ return localStorage.getItem(LAST_RING_SEEN_KEY) || ''; }
     function setLastRingSeen(id){ localStorage.setItem(LAST_RING_SEEN_KEY, id || ''); }
 
@@ -518,14 +538,11 @@
     window.TotoTypeUI.onRingEvent = async (ev) => {
       if (!ev || !ev.id) return;
 
-      // suppress first snapshot / repeats
       const lastSeen = getLastRingSeen();
       if (ev.id === lastSeen) return;
 
-      // record immediately so reconnects don't replay
       setLastRingSeen(ev.id);
 
-      // Dedup: if sender already played locally instantly, don't double-play
       if (ev.sender === clientId && lastSentRingId && ev.id === lastSentRingId) return;
 
       await playChime();
@@ -630,7 +647,6 @@
       applyEditorByMode();
       if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:true });
       if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(true);
-
       await unlockChime();
       refreshState();
     }
@@ -649,7 +665,6 @@
       applyEditorByMode();
       if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:false });
       if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(false);
-
       await unlockChime();
       refreshState();
     }
@@ -735,13 +750,10 @@
       if (window.FirebasePad?.ring) {
         try {
           await window.FirebasePad.ring({ id: ringId, t: Date.now(), sender: clientId });
-          // ✅ record immediately so this device won't replay on reconnect
           setLastRingSeen(ringId);
         } catch (e) {
           console.error("Ring write failed:", e);
         }
-      } else {
-        console.error("FirebasePad.ring not available (are you in Share mode and connected?)");
       }
     }
 
