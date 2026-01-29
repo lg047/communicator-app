@@ -32,11 +32,9 @@
     body.dark-mode{color:#fff;background:#000}
     body.dark-mode #editor{color:#fff}
 
-    /* ✅ prevent the "white bar" edge case by giving html a background too */
+    /* prevent any background gaps */
     html { background:#fff; }
     html.dark-mode { background:#000; }
-
-    /* When settings open, force the underlying safe-areas to match overlay (kills bottom white strip) */
     html.settings-open, body.settings-open { background: rgba(0,0,0,.45) !important; }
 
     #editor{
@@ -65,7 +63,6 @@
     #settingsBtn{right:20px}
     #ringBtn{left:20px}
 
-    /* Bell icon styling */
     .iconBtn svg{
       width:3.2rem;height:3.2rem;
       stroke:currentColor;
@@ -102,13 +99,13 @@
       cursor:pointer;
       color:#111;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation; /* ✅ helps iOS click synthesis */
     }
     body.dark-mode .topBtn{
       background:rgba(0,0,0,.75);
       color:#fff;
     }
 
-    /* overlay for mobile modal */
     #settingsOverlay{
       position:fixed;inset:0;
       background:rgba(0,0,0,.45);
@@ -116,7 +113,6 @@
       z-index:1001
     }
 
-    /* Settings menu (desktop default) */
     #settingsMenu{
       position:fixed;top:80px;right:20px;
       background:rgba(255,255,255,.95);
@@ -141,7 +137,8 @@
       margin-top:10px;width:100%;
       padding:8px;font-size:1rem;
       background:none;border:1px solid #888;border-radius:10px;
-      cursor:pointer;color:inherit
+      cursor:pointer;color:inherit;
+      touch-action: manipulation;
     }
 
     /* ---------- Desktop footer: centered mode + zoom ---------- */
@@ -188,19 +185,15 @@
       color:#eee;
     }
 
-    /* Keep old elements around for compatibility; hide */
     #controls, #shortcuts { display:none; }
 
     #dog,#jpHead{position:fixed;bottom:0;height:240px;pointer-events:auto;cursor:pointer;transition:transform .05s linear,filter .1s}
     #jpHead{right:0;height:225px}
     #dog.pressed,#jpHead.pressed{filter:brightness(.8)}
 
-    /* ---------- Mobile / iOS UI (treat iPad/tablet as mobile too) ---------- */
     @media (max-width: 900px), (pointer: coarse) {
-      /* Hide desktop corner buttons */
       #settingsBtn, #ringBtn{display:none;}
 
-      /* Show mobile buttons */
       #mobileTopRight{
         display:flex;
         top:calc(14px + env(safe-area-inset-top));
@@ -214,7 +207,6 @@
         left:14px;
       }
 
-      /* Ring button = same size as mobile settings button */
       #mobileRing, #mobileGear{
         width:auto;
         padding:12px 14px;
@@ -222,7 +214,6 @@
         border-radius:999px;
       }
 
-      /* Clear */
       #mobileClear{
         width:auto;
         padding:14px 18px;
@@ -230,21 +221,17 @@
         border-radius:22px;
       }
 
-      /* Hide desktop footer on mobile */
       #footerBar{display:none !important;}
 
-      /* Leave room for top buttons */
       #editor{
         padding:140px 22px;
         height:100%;
       }
 
-      /* ✅ PWA-only: add extra separation between buttons and text */
       body.pwa-standalone #editor{
-        padding-top:165px; /* extra vertical separation only in installed app */
+        padding-top:165px;
       }
 
-      /* Settings modal */
       #settingsMenu{
         left:16px;
         right:16px;
@@ -258,7 +245,6 @@
         box-shadow:0 16px 48px rgba(0,0,0,.32);
       }
 
-      /* Hide images toggle on mobile/tablet */
       #imagesItem{display:none !important;}
 
       .settings-item{margin:0;padding:10px 4px;}
@@ -357,35 +343,29 @@
       });
     }
 
-    // ✅ Detect standalone PWA and mark body/html (for styling & behavior)
+    // ✅ Detect standalone PWA and mark body (for styling & behavior)
     const isStandalone = (() => {
       try {
         return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || (window.navigator && window.navigator.standalone === true);
       } catch { return false; }
     })();
-    if (isStandalone) {
-      document.body.classList.add('pwa-standalone');
-    }
+    if (isStandalone) document.body.classList.add('pwa-standalone');
 
-    // ✅ Disable pinch-zoom ONLY in PWA standalone (best-effort on iOS)
+    // ✅ Disable pinch zoom ONLY in PWA standalone
+    // FIX: remove global touchend preventDefault (it was killing Clear clicks after focus/blur on iOS).
+    // We only block true multi-touch gestures.
     if (isStandalone) {
       const prevent = (e) => { e.preventDefault(); };
       document.addEventListener('gesturestart', prevent, { passive:false });
       document.addEventListener('gesturechange', prevent, { passive:false });
       document.addEventListener('gestureend', prevent, { passive:false });
 
-      // Also block 2-finger touchmove zoom gestures (doesn't affect single-finger scrolling)
       document.addEventListener('touchmove', (e) => {
         if (e.touches && e.touches.length > 1) e.preventDefault();
       }, { passive:false });
 
-      // Prevent double-tap zoom
-      let lastTouchEnd = 0;
-      document.addEventListener('touchend', (e) => {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) e.preventDefault();
-        lastTouchEnd = now;
-      }, { passive:false });
+      // ✅ remove double-tap zoom preventer that breaks click synthesis:
+      // (intentionally not included)
     }
 
     const body=document.body;
@@ -486,8 +466,9 @@
     }
 
     function updateBg(){
-      body.style.backgroundColor = darkSwitch.checked ? '#000' : '#fff';
-      html.style.backgroundColor = darkSwitch.checked ? '#000' : '#fff';
+      const bg = darkSwitch.checked ? '#000' : '#fff';
+      body.style.backgroundColor = bg;
+      html.style.backgroundColor = bg;
       if (darkSwitch.checked) html.classList.add('dark-mode'); else html.classList.remove('dark-mode');
     }
 
@@ -497,7 +478,6 @@
       refreshModeLabel();
     }
 
-    // ---------- Editor editability + button visibility by mode ----------
     function applyEditorByMode(){
       const mode = currentMode();
 
@@ -512,7 +492,6 @@
 
       if (mobileClear) mobileClear.style.display = (mode === 'viewer') ? 'none' : '';
 
-      // ring hidden in viewer
       const ringDisplay = (mode === 'viewer') ? 'none' : '';
       ringBtn.style.display = ringDisplay;
       if (mobileRing && mobileRing.parentElement) mobileRing.parentElement.style.display = ringDisplay;
@@ -593,7 +572,6 @@
       await playChime();
     };
 
-    // ---------- Remote update hook (text) ----------
     window.TotoTypeUI.onRemoteTextApplied = (remoteText) => {
       const txt = (typeof remoteText === 'string') ? remoteText : editor.innerText;
       if (txt.trim() === '') {
@@ -626,6 +604,26 @@
       if (!isMobile) editor.focus();
     }
 
+    // ✅ FIX: bind Clear on pointerdown (avoids iOS click synthesis glitch after focus/blur)
+    // Works alongside click; pointerdown fires reliably even if click is suppressed.
+    function bindFastTap(el, fn){
+      if (!el) return;
+      el.addEventListener('pointerdown', (e) => {
+        // only primary touch/pen/mouse
+        if (e.pointerType === 'touch' || e.pointerType === 'pen' || e.pointerType === 'mouse') {
+          e.preventDefault();
+          e.stopPropagation();
+          fn();
+        }
+      });
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fn();
+      });
+    }
+    bindFastTap(mobileClear, clearAndPropagate);
+
     // ---------- Settings open/close ----------
     let settingsOpen = false;
 
@@ -655,7 +653,7 @@
       setEditorInteractiveWhileSettings(false);
       body.classList.remove('settings-open');
       html.classList.remove('settings-open');
-      refreshState(); // restore proper bg
+      refreshState();
       if (!isMobile && currentMode() !== 'viewer') editor.focus();
     }
 
@@ -777,9 +775,6 @@
     // Zoom buttons
     zoomInBtn.addEventListener('click',()=>{ fontSizeVW=Math.min(fontSizeVW+1,20); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
     zoomOutBtn.addEventListener('click',()=>{ fontSizeVW=Math.max(fontSizeVW-1,2); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
-
-    // Mobile clear
-    mobileClear.addEventListener('click', clearAndPropagate);
 
     // ---------- Ring button behavior ----------
     async function ringPressed(){
