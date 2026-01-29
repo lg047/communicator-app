@@ -87,6 +87,29 @@
     function refreshState(){editor.style.color=darkSwitch.checked?'#fff':'';updateShortcuts();updateBg();}
     function resetSettings(){darkSwitch.checked=false;readySwitch.checked=false;imagesSwitch.checked=true;body.classList.remove('dark-mode');refreshState();toggleImages(true);settingsMenu.style.display='none';}
 
+    // ---------- NEW: helpers for "select all then delete" ----------
+    function selectionCoversAll(el){
+      const sel = window.getSelection?.();
+      if (!sel || sel.rangeCount === 0) return false;
+      const range = sel.getRangeAt(0);
+      if (!el.contains(range.commonAncestorContainer)) return false;
+
+      const all = document.createRange();
+      all.selectNodeContents(el);
+
+      return (
+        range.compareBoundaryPoints(Range.START_TO_START, all) === 0 &&
+        range.compareBoundaryPoints(Range.END_TO_END, all) === 0
+      );
+    }
+
+    function clearEditorAndReset(){
+      document.execCommand('delete');
+      fontSizeVW=6;
+      setFontSize();
+      refreshState();
+    }
+
     // ---------- Event wiring ----------
     settingsBtn.addEventListener('click',()=>{settingsMenu.style.display=settingsMenu.style.display==='flex'?'none':'flex';});
     doneBtn.addEventListener('click',()=>settingsMenu.style.display='none');
@@ -96,22 +119,78 @@
     zoomOutBtn.addEventListener('click',()=>{fontSizeVW=Math.max(fontSizeVW-1,2);setFontSize();editor.focus();});
 
     editor.addEventListener('input',()=>{adjustFontSizeToFit();refreshState();});
+
     document.addEventListener('keydown',e=>{
-      if(readySwitch.checked&&e.ctrlKey&&e.key==='Enter'){e.preventDefault();body.style.backgroundColor=darkSwitch.checked?DARK_GREEN_BG:GREEN_BG;editor.focus();}
-      if(e.ctrlKey&&e.key==='Backspace'){e.preventDefault();document.execCommand('selectAll');document.execCommand('delete');fontSizeVW=6;setFontSize();refreshState();}
-      if(e.ctrlKey&&(e.key==='+'||e.key==='=')){e.preventDefault();fontSizeVW=Math.min(fontSizeVW+1,20);setFontSize();}
-      if(e.ctrlKey&&e.key==='-'){e.preventDefault();fontSizeVW=Math.max(fontSizeVW-1,2);setFontSize();}
+      // Cue
+      if(readySwitch.checked&&e.ctrlKey&&e.key==='Enter'){
+        e.preventDefault();
+        body.style.backgroundColor=darkSwitch.checked?DARK_GREEN_BG:GREEN_BG;
+        editor.focus();
+      }
+
+      // Existing clear shortcut
+      if(e.ctrlKey&&e.key==='Backspace'){
+        e.preventDefault();
+        document.execCommand('selectAll');
+        clearEditorAndReset();
+        return;
+      }
+
+      // NEW: Select-all (Ctrl+A / Cmd+A / any full selection) then Backspace/Delete resets font size too
+      const isDeleteKey = (e.key==='Backspace' || e.key==='Delete');
+      if(isDeleteKey && document.activeElement===editor && selectionCoversAll(editor)){
+        e.preventDefault();
+        clearEditorAndReset();
+        return;
+      }
+
+      // Zoom shortcuts
+      if(e.ctrlKey&&(e.key==='+'||e.key==='=')){
+        e.preventDefault();
+        fontSizeVW=Math.min(fontSizeVW+1,20);
+        setFontSize();
+      }
+      if(e.ctrlKey&&e.key==='-'){
+        e.preventDefault();
+        fontSizeVW=Math.max(fontSizeVW-1,2);
+        setFontSize();
+      }
     });
 
     // ---------- Image visibility ----------
-    function toggleImages(show){const disp=show?'':'none';dog.style.display=jpHead.style.display=disp;if(!show){[pipiAudio,jpAudio].forEach(a=>{a.pause();a.currentTime=0;});dog.style.transform=jpHead.style.transform='';}}
+    function toggleImages(show){
+      const disp=show?'':'none';
+      dog.style.display=jpHead.style.display=disp;
+      if(!show){
+        [pipiAudio,jpAudio].forEach(a=>{a.pause();a.currentTime=0;});
+        dog.style.transform=jpHead.style.transform='';
+      }
+    }
     imagesSwitch.addEventListener('change',()=>toggleImages(imagesSwitch.checked));
 
     // ---------- Soundboard visuals ----------
-    function pulse(el,audio){attachAnalyser(audio);if(!audio.analyser)return;const data=new Uint8Array(audio.analyser.frequencyBinCount);
-      function step(){if(audio.paused||audio.ended){el.style.transform='';return;}audio.analyser.getByteFrequencyData(data);let sum=0;for(let i=0;i<data.length;i++)sum+=data[i];const scale=1+(sum/data.length/255)*0.12;el.style.transform=`scale(${scale})`;requestAnimationFrame(step);}requestAnimationFrame(step);}
-    function addSoundEvents(el,audio){el.addEventListener('pointerdown',()=>{el.classList.add('pressed');audio.currentTime=0;audio.play();pulse(el,audio);});el.addEventListener('pointerup',()=>el.classList.remove('pressed'));el.addEventListener('pointerleave',()=>el.classList.remove('pressed'));audio.addEventListener('ended',()=>{el.classList.remove('pressed');el.style.transform='';});}
-    addSoundEvents(dog,pipiAudio);addSoundEvents(jpHead,jpAudio);
+    function pulse(el,audio){
+      attachAnalyser(audio);
+      if(!audio.analyser) return;
+      const data=new Uint8Array(audio.analyser.frequencyBinCount);
+      function step(){
+        if(audio.paused||audio.ended){el.style.transform='';return;}
+        audio.analyser.getByteFrequencyData(data);
+        let sum=0;for(let i=0;i<data.length;i++)sum+=data[i];
+        const scale=1+(sum/data.length/255)*0.12;
+        el.style.transform=`scale(${scale})`;
+        requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    function addSoundEvents(el,audio){
+      el.addEventListener('pointerdown',()=>{el.classList.add('pressed');audio.currentTime=0;audio.play();pulse(el,audio);});
+      el.addEventListener('pointerup',()=>el.classList.remove('pressed'));
+      el.addEventListener('pointerleave',()=>el.classList.remove('pressed'));
+      audio.addEventListener('ended',()=>{el.classList.remove('pressed');el.style.transform='';});
+    }
+    addSoundEvents(dog,pipiAudio);
+    addSoundEvents(jpHead,jpAudio);
 
     // ---------- init ----------
     window.onload=()=>{editor.focus();resetSettings();setFontSize();};
