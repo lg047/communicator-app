@@ -13,223 +13,402 @@
     html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;transition:background-color .3s,color .3s}
     body.dark-mode{color:#fff}
     body.dark-mode #editor{color:#fff}
-    #editor{width:100%;height:calc(100% - 80px);font-size:6vw;line-height:1.2;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;outline:none;padding:90px 200px;box-sizing:border-box;color:inherit}
-    #settingsBtn{position:fixed;top:20px;right:20px;background:none;border:none;font-size:4rem;cursor:pointer;color:#888;z-index:1002}
+
+    #editor{
+      width:100%;
+      height:calc(100% - 80px);
+      font-size:6vw;
+      line-height:1.2;
+      white-space:pre-wrap;
+      overflow-wrap:break-word;
+      word-break:break-word;
+      outline:none;
+      padding:90px 200px;
+      box-sizing:border-box;
+      color:inherit
+    }
+
+    /* Top-right desktop gear */
+    #settingsBtn{
+      position:fixed;top:20px;right:20px;
+      background:none;border:none;
+      font-size:4rem;cursor:pointer;color:#888;
+      z-index:1003
+    }
+
+    /* Mobile top bar (Clear + Gear) */
+    #mobileTopBar{
+      position:fixed;
+      top:12px;
+      right:12px;
+      display:none;
+      gap:10px;
+      z-index:1004;
+      align-items:center;
+    }
+    .topBtn{
+      border:none;
+      border-radius:14px;
+      padding:12px 16px;
+      font-size:1.15rem;
+      line-height:1;
+      background:rgba(255,255,255,.92);
+      box-shadow:0 6px 18px rgba(0,0,0,.18);
+      cursor:pointer;
+      color:#111;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body.dark-mode .topBtn{
+      background:rgba(0,0,0,.75);
+      color:#fff;
+    }
+    #mobileGear{
+      padding:12px 14px;
+      font-size:1.4rem;
+    }
 
     /* overlay for mobile modal */
-    #settingsOverlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:1000}
+    #settingsOverlay{
+      position:fixed;inset:0;
+      background:rgba(0,0,0,.45);
+      display:none;
+      z-index:1001
+    }
 
-    #settingsMenu{position:fixed;top:80px;right:20px;background:rgba(255,255,255,.9);border:1px solid #ccc;border-radius:4px;display:none;flex-direction:column;padding:10px;box-shadow:0 2px 5px rgba(0,0,0,.2);z-index:1001;width:220px}
+    /* Settings menu (desktop default: small popover) */
+    #settingsMenu{
+      position:fixed;top:80px;right:20px;
+      background:rgba(255,255,255,.95);
+      border:1px solid #ccc;border-radius:8px;
+      display:none;flex-direction:column;
+      padding:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,.18);
+      z-index:1002;width:240px
+    }
     body.dark-mode #settingsMenu{background:rgba(0,0,0,.9);border-color:#444}
-    .settings-item{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
+
+    .settings-item{display:flex;justify-content:space-between;align-items:center;margin:10px 0}
     .switch{position:relative;display:inline-block;width:50px;height:24px}
     .switch input{opacity:0;width:0;height:0}
     .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;transition:.4s;border-radius:24px}
     .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.4s;border-radius:50%}
     input:checked + .slider{background:#2196f3}
     input:checked + .slider:before{transform:translateX(26px)}
-    .switch-label{font-size:.9rem;color:inherit}
-    #doneBtn{margin-top:10px;width:100%;padding:6px;font-size:.9rem;background:none;border:1px solid #888;border-radius:3px;cursor:pointer;color:inherit}
+    .switch-label{font-size:.95rem;color:inherit}
 
-    #controls{position:fixed;bottom:10px;right:10px;background:rgba(255,255,255,.7);padding:5px;border-radius:5px;display:flex;gap:5px;z-index:1000}
+    #doneBtn{
+      margin-top:10px;width:100%;
+      padding:8px;font-size:1rem;
+      background:none;border:1px solid #888;border-radius:10px;
+      cursor:pointer;color:inherit
+    }
+
+    /* Desktop footer controls */
+    #controls{
+      position:fixed;bottom:10px;right:10px;
+      background:rgba(255,255,255,.7);
+      padding:5px;border-radius:5px;
+      display:flex;gap:5px;z-index:1000
+    }
     body.dark-mode #controls{background:rgba(0,0,0,.7)}
-    #controls button{font-size:1rem;padding:.2em .5em;border:none;border-radius:3px;background:none;color:inherit;cursor:pointer}
-    #clearBtn{display:none;}
-
-    #shortcuts{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.6);padding:4px 6px;border-radius:4px;font-size:.8rem;color:#333;pointer-events:none;z-index:1000}
+    #controls button{
+      font-size:1rem;padding:.2em .5em;border:none;border-radius:3px;
+      background:none;color:inherit;cursor:pointer
+    }
+    #shortcuts{
+      position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
+      background:rgba(255,255,255,.6);
+      padding:4px 6px;border-radius:4px;
+      font-size:.8rem;color:#333;
+      pointer-events:none;z-index:1000
+    }
     body.dark-mode #shortcuts{background:rgba(0,0,0,.6);color:#ddd}
+
     #dog,#jpHead{position:fixed;bottom:0;height:240px;pointer-events:auto;cursor:pointer;transition:transform .05s linear,filter .1s}
     #jpHead{right:0;height:225px}
     #dog.pressed,#jpHead.pressed{filter:brightness(.8)}
 
     /* ---------- Mobile / iOS UI ---------- */
-    @media (max-width: 768px), (pointer: coarse) {
+    @media (max-width: 900px), (pointer: coarse) {
+      /* Use a mobile top bar instead of the desktop gear */
+      #settingsBtn{display:none;}
+      #mobileTopBar{display:flex;}
+
+      /* Bigger tap targets already handled by .topBtn */
+
+      /* Remove footer on mobile entirely */
+      #controls{display:none !important;}
+      #shortcuts{display:none !important;}
+
+      /* Better mobile text area */
       #editor{
-        padding:80px 24px;
-        height:calc(100% - 120px); /* give a bit more room for bigger controls */
+        padding:90px 22px; /* leave room for top bar */
+        height:100%;
       }
 
-      /* Make settings into a big modal card */
+      /* Big modal settings */
       #settingsMenu{
-        top:50%;
-        left:50%;
-        right:auto;
+        top:50%;left:50%;right:auto;
         transform:translate(-50%,-50%);
-        width:min(92vw,420px);
-        border-radius:16px;
-        padding:18px;
-        box-shadow:0 10px 30px rgba(0,0,0,.25);
+        width:min(92vw,460px);
+        border-radius:18px;
+        padding:18px 18px 14px;
+        box-shadow:0 12px 38px rgba(0,0,0,.28);
       }
+      .switch-label{font-size:1.15rem;}
+      #doneBtn{padding:12px;font-size:1.1rem;border-radius:14px;}
 
-      /* Hide Cue Mode + Show Images in settings on mobile */
+      /* Hide options you don't want on mobile */
       #cueItem{display:none !important;}
       #imagesItem{display:none !important;}
-
-      /* Bigger controls + add Clear */
-      #controls{
-        bottom:calc(10px + env(safe-area-inset-bottom));
-        right:10px;
-        padding:8px;
-        gap:8px;
-      }
-      #controls button{
-        font-size:1.15rem;
-        padding:.35em .7em;
-      }
-      #clearBtn{display:inline-flex;}
-
-      /* Make Done easier to hit */
-      #doneBtn{
-        padding:10px;
-        font-size:1rem;
-        border-radius:10px;
-      }
-      .switch-label{font-size:1.05rem;}
     }
   </style>
 </head>
 <body>
+  <!-- Mobile top bar -->
+  <div id="mobileTopBar">
+    <button class="topBtn" id="mobileClear">Clear</button>
+    <button class="topBtn" id="mobileGear" aria-label="Settings">⚙</button>
+  </div>
+
+  <!-- Desktop gear -->
   <button id="settingsBtn">⚙</button>
+
   <div id="settingsOverlay"></div>
 
   <div id="settingsMenu">
-    <div class="settings-item" id="darkItem"><span class="switch-label">Dark Mode</span><label class="switch"><input type="checkbox" id="darkSwitch"><span class="slider"></span></label></div>
-    <div class="settings-item" id="cueItem"><span class="switch-label">Cue Mode</span><label class="switch"><input type="checkbox" id="readySwitch"><span class="slider"></span></label></div>
-    <div class="settings-item" id="imagesItem"><span class="switch-label">Show Images</span><label class="switch"><input type="checkbox" id="imagesSwitch" checked><span class="slider"></span></label></div>
-    <div class="settings-item" id="shareItem"><span class="switch-label">Share Mode</span><label class="switch"><input type="checkbox" id="shareSwitch"><span class="slider"></span></label></div>
+    <div class="settings-item" id="darkItem">
+      <span class="switch-label">Dark Mode</span>
+      <label class="switch"><input type="checkbox" id="darkSwitch"><span class="slider"></span></label>
+    </div>
+
+    <div class="settings-item" id="cueItem">
+      <span class="switch-label">Cue Mode</span>
+      <label class="switch"><input type="checkbox" id="readySwitch"><span class="slider"></span></label>
+    </div>
+
+    <div class="settings-item" id="imagesItem">
+      <span class="switch-label">Show Images</span>
+      <label class="switch"><input type="checkbox" id="imagesSwitch" checked><span class="slider"></span></label>
+    </div>
+
+    <div class="settings-item" id="shareItem">
+      <span class="switch-label">Share Mode</span>
+      <label class="switch"><input type="checkbox" id="shareSwitch"><span class="slider"></span></label>
+    </div>
+
     <button id="doneBtn">Done</button>
   </div>
 
   <div id="editor" contenteditable="true" spellcheck="false"></div>
-  <div id="controls">
-    <button id="clearBtn">Clear</button>
-    <button id="zoomOut">A-</button>
-    <button id="zoomIn">A+</button>
-  </div>
+
+  <!-- Desktop footer controls (hidden on mobile via CSS) -->
+  <div id="controls"><button id="zoomOut">A-</button><button id="zoomIn">A+</button></div>
   <div id="shortcuts"></div>
 
-  <img src="pipi_new1.png" id="dog" alt="pipi image">
-  <img src="jp.png" id="jpHead" alt="jp image">
-  <audio id="pipiSound" src="pipi.wav" preload="auto"></audio>
-  <audio id="jpSound" src="jp.wav" preload="auto"></audio>
+  <!-- Media: prevent mobile from downloading by default (src empty; real URLs in data-src) -->
+  <img data-src="pipi_new1.png" src="" loading="lazy" decoding="async" id="dog" alt="pipi image" style="display:none">
+  <img data-src="jp.png" src="" loading="lazy" decoding="async" id="jpHead" alt="jp image" style="display:none">
+  <audio id="pipiSound" data-src="pipi.wav" preload="none"></audio>
+  <audio id="jpSound" data-src="jp.wav" preload="none"></audio>
 
   <script>
     // ---------- DOM refs ----------
     const body=document.body;
     const editor=document.getElementById('editor');
+
     const settingsBtn=document.getElementById('settingsBtn');
     const settingsMenu=document.getElementById('settingsMenu');
     const settingsOverlay=document.getElementById('settingsOverlay');
+    const doneBtn=document.getElementById('doneBtn');
+
+    const mobileGear=document.getElementById('mobileGear');
+    const mobileClear=document.getElementById('mobileClear');
+
     const darkSwitch=document.getElementById('darkSwitch');
     const readySwitch=document.getElementById('readySwitch');
     const imagesSwitch=document.getElementById('imagesSwitch');
     const shareSwitch=document.getElementById('shareSwitch');
-    const doneBtn=document.getElementById('doneBtn');
+
     const zoomInBtn=document.getElementById('zoomIn');
     const zoomOutBtn=document.getElementById('zoomOut');
-    const clearBtn=document.getElementById('clearBtn');
     const shortcuts=document.getElementById('shortcuts');
+
     const dog=document.getElementById('dog');
     const jpHead=document.getElementById('jpHead');
     const pipiAudio=document.getElementById('pipiSound');
     const jpAudio=document.getElementById('jpSound');
 
-    // ---------- Mobile detection + defaults ----------
+    // ---------- Mobile detection ----------
     const isMobile = (() => {
-      try {
-        return window.matchMedia?.('(pointer: coarse)').matches || window.innerWidth <= 768;
-      } catch {
-        return window.innerWidth <= 768;
-      }
+      const ua = navigator.userAgent || '';
+      const uaMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+      const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+      return uaMobile || (coarse && window.innerWidth <= 900) || window.innerWidth <= 768;
     })();
-
-    const DEFAULT_FONT_VW_DESKTOP = 6;
-    const DEFAULT_FONT_VW_MOBILE  = 10;   // bigger default on iOS/mobile
-    let defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
 
     // ---------- Local-only storage (Solo mode) ----------
     const SOLO_KEY = 'tototype_solo_text';
     function loadSoloText(){ return localStorage.getItem(SOLO_KEY) ?? ''; }
     function saveSoloText(t){ localStorage.setItem(SOLO_KEY, t ?? ''); }
 
-    // ---------- Web Audio helpers ----------
-    const AudioContext=window.AudioContext||window.webkitAudioContext;
-    let audioCtx; // lazily created on first interaction
-    function ensureCtx(){if(!AudioContext)return null;if(!audioCtx)audioCtx=new AudioContext();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
-    function attachAnalyser(el){if(el.analyser||!ensureCtx())return;const src=audioCtx.createMediaElementSource(el);const analyser=audioCtx.createAnalyser();analyser.fftSize=256;src.connect(analyser);analyser.connect(audioCtx.destination);el.analyser=analyser;}
-
     // ---------- UI state ----------
-    let fontSizeVW=DEFAULT_FONT_VW_DESKTOP;
+    const DEFAULT_FONT_VW_DESKTOP = 6;
+    const DEFAULT_FONT_VW_MOBILE  = 10;  // bigger default on iOS/mobile
+    let defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
+
+    let fontSizeVW = defaultFontVW;
+
     const RED_BG='#ffecec',GREEN_BG='#ecffec',DARK_RED_BG='#330000',DARK_GREEN_BG='#003300';
 
-    function setFontSize(){editor.style.fontSize=fontSizeVW+'vw';}
+    function setFontSize(){ editor.style.fontSize = fontSizeVW+'vw'; }
     function adjustFontSizeToFit(){
-      while(editor.scrollHeight>editor.clientHeight && fontSizeVW>2){
-        fontSizeVW=Math.max(fontSizeVW-.5,2);
+      while(editor.scrollHeight > editor.clientHeight && fontSizeVW > 2){
+        fontSizeVW = Math.max(fontSizeVW - 0.5, 2);
         setFontSize();
       }
     }
+
     function updateShortcuts(){
+      if (isMobile) { shortcuts.textContent = ''; return; }
       let mode = shareSwitch.checked ? 'Share' : 'Solo';
-      let t;
-      if (isMobile) {
-        t = `Mode: ${mode} | Tap Clear: Reset | A-/A+: Zoom`;
-      } else {
-        t = `Mode: ${mode} | Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom`;
-        if(readySwitch.checked) t = 'Ctrl+Enter: Cue | ' + t;
-      }
+      let t = `Mode: ${mode} | Enter: New Line | Ctrl+Backspace: Clear | Ctrl+(+)/(-): Zoom`;
+      if(readySwitch.checked)t='Ctrl+Enter: Cue | '+t;
       shortcuts.textContent=t;
     }
+
     function updateBg(){
       if(readySwitch.checked){
-        body.style.backgroundColor=darkSwitch.checked?DARK_RED_BG:RED_BG;
+        body.style.backgroundColor = darkSwitch.checked ? DARK_RED_BG : RED_BG;
       }else{
-        body.style.backgroundColor=darkSwitch.checked?'#000':'#fff';
+        body.style.backgroundColor = darkSwitch.checked ? '#000' : '#fff';
       }
     }
+
     function refreshState(){
-      editor.style.color=darkSwitch.checked?'#fff':'';
+      editor.style.color = darkSwitch.checked ? '#fff' : '';
       updateShortcuts();
       updateBg();
     }
 
-    // ----- Hook so Firebase remote updates trigger the same auto-fit + ALSO reset size on remote clears -----
+    // ---------- Media lazy-load (desktop only, and only when images ON) ----------
+    let mediaLoaded = false;
+
+    function loadMediaIfNeeded(){
+      if (mediaLoaded) return;
+      mediaLoaded = true;
+
+      // Load images
+      if (dog && !dog.src) dog.src = dog.dataset.src || '';
+      if (jpHead && !jpHead.src) jpHead.src = jpHead.dataset.src || '';
+
+      // Load audio
+      if (pipiAudio && !pipiAudio.src) pipiAudio.src = pipiAudio.dataset.src || '';
+      if (jpAudio && !jpAudio.src) jpAudio.src = jpAudio.dataset.src || '';
+    }
+
+    function toggleImages(show){
+      // On mobile: skip media entirely (never load, always hidden)
+      if (isMobile) {
+        dog.style.display = 'none';
+        jpHead.style.display = 'none';
+        [pipiAudio, jpAudio].forEach(a=>{ try{a.pause();a.currentTime=0;}catch{} });
+        dog.style.transform = jpHead.style.transform = '';
+        return;
+      }
+
+      // Desktop: load media only if needed and showing
+      if (show) loadMediaIfNeeded();
+
+      const disp = show ? '' : 'none';
+      dog.style.display = jpHead.style.display = disp;
+
+      if(!show){
+        [pipiAudio,jpAudio].forEach(a=>{ try{a.pause();a.currentTime=0;}catch{} });
+        dog.style.transform = jpHead.style.transform = '';
+      }
+    }
+
+    // ---------- Soundboard visuals (only meaningful on desktop when images loaded) ----------
+    const AudioContext=window.AudioContext||window.webkitAudioContext;
+    let audioCtx;
+    function ensureCtx(){ if(!AudioContext) return null; if(!audioCtx) audioCtx = new AudioContext(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
+    function attachAnalyser(el){
+      if(el.analyser || !ensureCtx() || !el.src) return;
+      const src = audioCtx.createMediaElementSource(el);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      src.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      el.analyser = analyser;
+    }
+    function pulse(el,audio){
+      attachAnalyser(audio);
+      if(!audio.analyser) return;
+      const data=new Uint8Array(audio.analyser.frequencyBinCount);
+      function step(){
+        if(audio.paused||audio.ended){ el.style.transform=''; return; }
+        audio.analyser.getByteFrequencyData(data);
+        let sum=0; for(let i=0;i<data.length;i++) sum+=data[i];
+        const scale=1+(sum/data.length/255)*0.12;
+        el.style.transform=`scale(${scale})`;
+        requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    function addSoundEvents(el,audio){
+      el.addEventListener('pointerdown',()=>{
+        if (isMobile) return;           // mobile skips media
+        if (!imagesSwitch.checked) return;
+        loadMediaIfNeeded();
+        el.classList.add('pressed');
+        try{ audio.currentTime=0; audio.play(); }catch{}
+        pulse(el,audio);
+      });
+      el.addEventListener('pointerup',()=>el.classList.remove('pressed'));
+      el.addEventListener('pointerleave',()=>el.classList.remove('pressed'));
+      audio.addEventListener('ended',()=>{ el.classList.remove('pressed'); el.style.transform=''; });
+    }
+    addSoundEvents(dog,pipiAudio);
+    addSoundEvents(jpHead,jpAudio);
+
+    // ---------- Remote update hook (auto-fit + reset size on remote clear) ----------
     window.TotoTypeUI = window.TotoTypeUI || {};
     window.TotoTypeUI.onRemoteTextApplied = (remoteText) => {
       const txt = (typeof remoteText === 'string') ? remoteText : editor.innerText;
-      // If remote content is cleared, mirror the "clear resets font size" behavior (device-specific default)
       if (txt.trim() === '') {
-        fontSizeVW = defaultFontVW;
+        fontSizeVW = defaultFontVW;  // device-specific default
         setFontSize();
       }
       adjustFontSizeToFit();
       refreshState();
     };
 
-    // ---------- Select-all-then-delete helpers ----------
-    function selectionCoversAll(el){
-      const sel = window.getSelection?.();
-      if (!sel || sel.rangeCount === 0) return false;
-      const range = sel.getRangeAt(0);
-      if (!el.contains(range.commonAncestorContainer)) return false;
-
-      const all = document.createRange();
-      all.selectNodeContents(el);
-
-      return (
-        range.compareBoundaryPoints(Range.START_TO_START, all) === 0 &&
-        range.compareBoundaryPoints(Range.END_TO_END, all) === 0
-      );
-    }
-
+    // ---------- Clear helpers ----------
     function clearEditorAndReset(){
+      // Clear editor contents
+      document.execCommand('selectAll');
       document.execCommand('delete');
+      // Reset font size for THIS device
       fontSizeVW = defaultFontVW;
       setFontSize();
       refreshState();
     }
 
-    // ---------- Settings menu open/close (desktop + mobile modal overlay) ----------
+    async function clearAndPropagate(){
+      clearEditorAndReset();
+      if (shareSwitch.checked) {
+        // Push empty text to Firebase so other viewers also clear + reset size
+        if (window.FirebasePad?.setText) {
+          try { await window.FirebasePad.setText(''); } catch {}
+        }
+      } else {
+        saveSoloText(editor.innerText);
+      }
+      editor.focus();
+    }
+
+    // ---------- Settings open/close ----------
     function openSettings(){
       settingsMenu.style.display='flex';
       if (isMobile) settingsOverlay.style.display='block';
@@ -239,18 +418,36 @@
       settingsOverlay.style.display='none';
     }
 
-    // ---------- Share Mode toggle ----------
+    settingsBtn.addEventListener('click',()=>{
+      (settingsMenu.style.display==='flex') ? closeSettings() : openSettings();
+    });
+    mobileGear.addEventListener('click',()=>{
+      (settingsMenu.style.display==='flex') ? closeSettings() : openSettings();
+    });
+    settingsOverlay.addEventListener('click', closeSettings);
+    doneBtn.addEventListener('click', closeSettings);
+
+    // ---------- Toggles ----------
+    darkSwitch.addEventListener('change',()=>{
+      darkSwitch.checked ? body.classList.add('dark-mode') : body.classList.remove('dark-mode');
+      refreshState();
+    });
+
+    readySwitch.addEventListener('change', refreshState);
+
+    imagesSwitch.addEventListener('change',()=>{
+      toggleImages(imagesSwitch.checked);
+    });
+
+    // ---------- Share mode ----------
     async function setShareMode(on){
       if (on) {
-        // Solo -> Share
         saveSoloText(editor.innerText);
         editor.innerText = '';
         fontSizeVW = defaultFontVW; setFontSize();
         refreshState();
-
         if (window.FirebasePad?.enable) await window.FirebasePad.enable();
       } else {
-        // Share -> Solo
         if (window.FirebasePad?.disable) window.FirebasePad.disable();
         editor.innerText = loadSoloText();
         fontSizeVW = defaultFontVW; setFontSize();
@@ -259,146 +456,76 @@
       }
     }
 
-    // ---------- Event wiring ----------
-    settingsBtn.addEventListener('click',()=>{
-      if(settingsMenu.style.display==='flex') closeSettings();
-      else openSettings();
-    });
-    settingsOverlay.addEventListener('click', closeSettings);
-    doneBtn.addEventListener('click', closeSettings);
-
-    darkSwitch.addEventListener('change',()=>{
-      darkSwitch.checked?body.classList.add('dark-mode'):body.classList.remove('dark-mode');
-      refreshState();
-    });
-    readySwitch.addEventListener('change',refreshState);
-
-    // Show images still exists (desktop); on mobile default OFF and hidden in settings
-    imagesSwitch.addEventListener('change',()=>toggleImages(imagesSwitch.checked));
-
-    shareSwitch.addEventListener('change', async () => {
+    shareSwitch.addEventListener('change', async ()=>{
       await setShareMode(shareSwitch.checked);
       editor.focus();
       refreshState();
     });
 
-    zoomInBtn.addEventListener('click',()=>{fontSizeVW=Math.min(fontSizeVW+1,20);setFontSize();editor.focus();});
-    zoomOutBtn.addEventListener('click',()=>{fontSizeVW=Math.max(fontSizeVW-1,2);setFontSize();editor.focus();});
-
-    // Mobile clear button (also useful on desktop)
-    clearBtn.addEventListener('click', async ()=>{
-      editor.focus();
-      document.execCommand('selectAll');
-      clearEditorAndReset();
-
-      // persist/sync
-      if (shareSwitch.checked) {
-        if (window.FirebasePad?.setText) {
-          try { await window.FirebasePad.setText(''); } catch {}
-        }
-      } else {
-        saveSoloText(editor.innerText);
-      }
-    });
-
+    // ---------- Input handling ----------
     editor.addEventListener('input',()=>{
       if (!shareSwitch.checked) saveSoloText(editor.innerText);
       adjustFontSizeToFit();
       refreshState();
     });
 
+    // Desktop keyboard shortcuts (mobile doesn't have ctrl/cmd)
     document.addEventListener('keydown',e=>{
-      if(readySwitch.checked&&e.ctrlKey&&e.key==='Enter'){
+      if (isMobile) return;
+
+      if(readySwitch.checked && e.ctrlKey && e.key==='Enter'){
         e.preventDefault();
-        body.style.backgroundColor=darkSwitch.checked?DARK_GREEN_BG:GREEN_BG;
+        body.style.backgroundColor = darkSwitch.checked ? DARK_GREEN_BG : GREEN_BG;
         editor.focus();
       }
-      if(e.ctrlKey&&e.key==='Backspace'){
+      if(e.ctrlKey && e.key==='Backspace'){
         e.preventDefault();
-        document.execCommand('selectAll');
-        clearEditorAndReset();
-        if (!shareSwitch.checked) saveSoloText(editor.innerText);
+        clearAndPropagate();
         return;
       }
-
-      // Select-all then Backspace/Delete => clear + reset
-      const isDeleteKey = (e.key==='Backspace' || e.key==='Delete');
-      if(isDeleteKey && document.activeElement===editor && selectionCoversAll(editor)){
+      if(e.ctrlKey && (e.key==='+' || e.key==='=')){
         e.preventDefault();
-        clearEditorAndReset();
-        if (!shareSwitch.checked) saveSoloText(editor.innerText);
-        return;
-      }
-
-      if(e.ctrlKey&&(e.key==='+'||e.key==='=')){
-        e.preventDefault();
-        fontSizeVW=Math.min(fontSizeVW+1,20);
+        fontSizeVW = Math.min(fontSizeVW+1,20);
         setFontSize();
       }
-      if(e.ctrlKey&&e.key==='-'){
+      if(e.ctrlKey && e.key==='-'){
         e.preventDefault();
-        fontSizeVW=Math.max(fontSizeVW-1,2);
+        fontSizeVW = Math.max(fontSizeVW-1,2);
         setFontSize();
       }
     });
 
-    // ---------- Image visibility ----------
-    function toggleImages(show){
-      const disp=show?'':'none';
-      dog.style.display=jpHead.style.display=disp;
-      if(!show){
-        [pipiAudio,jpAudio].forEach(a=>{a.pause();a.currentTime=0;});
-        dog.style.transform=jpHead.style.transform='';
-      }
+    // Desktop zoom buttons
+    if (zoomInBtn && zoomOutBtn){
+      zoomInBtn.addEventListener('click',()=>{ fontSizeVW=Math.min(fontSizeVW+1,20); setFontSize(); editor.focus(); });
+      zoomOutBtn.addEventListener('click',()=>{ fontSizeVW=Math.max(fontSizeVW-1,2); setFontSize(); editor.focus(); });
     }
 
-    // ---------- Soundboard visuals ----------
-    function pulse(el,audio){
-      attachAnalyser(audio);
-      if(!audio.analyser)return;
-      const data=new Uint8Array(audio.analyser.frequencyBinCount);
-      function step(){
-        if(audio.paused||audio.ended){el.style.transform='';return;}
-        audio.analyser.getByteFrequencyData(data);
-        let sum=0;for(let i=0;i<data.length;i++)sum+=data[i];
-        const scale=1+(sum/data.length/255)*0.12;
-        el.style.transform=`scale(${scale})`;
-        requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-    function addSoundEvents(el,audio){
-      el.addEventListener('pointerdown',()=>{el.classList.add('pressed');audio.currentTime=0;audio.play();pulse(el,audio);});
-      el.addEventListener('pointerup',()=>el.classList.remove('pressed'));
-      el.addEventListener('pointerleave',()=>el.classList.remove('pressed'));
-      audio.addEventListener('ended',()=>{el.classList.remove('pressed');el.style.transform='';});
-    }
-    addSoundEvents(dog,pipiAudio);
-    addSoundEvents(jpHead,jpAudio);
+    // Mobile clear button (top bar) + also useful on desktop if shown (it isn't)
+    mobileClear.addEventListener('click', clearAndPropagate);
 
     // ---------- init ----------
     window.onload=()=>{
       editor.focus();
 
-      // default to Solo on load (safer)
-      shareSwitch.checked=false;
+      // default to Solo on load
+      shareSwitch.checked = false;
 
-      // Mobile defaults
       defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
       fontSizeVW = defaultFontVW;
+      setFontSize();
 
-      // Mobile: Show Images OFF by default
+      // Desktop should load with images ON by default
+      // Mobile should skip media entirely + images off
       if (isMobile) {
-        imagesSwitch.checked=false;
-        toggleImages(false);
+        imagesSwitch.checked = false;
+        toggleImages(false);  // ensures hidden + no load
       } else {
-        toggleImages(imagesSwitch.checked);
+        imagesSwitch.checked = true;
+        toggleImages(true);   // will lazy-load media now (desktop only)
       }
 
       editor.innerText = loadSoloText();
-      if (darkSwitch.checked) body.classList.add('dark-mode');
-
-      setFontSize();
       adjustFontSizeToFit();
       refreshState();
     };
@@ -486,8 +613,7 @@
         const current = editorEl.innerText;
 
         if (remoteText === current) {
-          // Even if equal, a clear might need to reset font size on this device in edge cases.
-          // Only do this when content is empty to avoid extra work.
+          // If it's empty, still ensure viewers reset font size properly.
           if ((remoteText ?? "").trim() === "") {
             try { window.TotoTypeUI?.onRemoteTextApplied?.(remoteText); } catch {}
           }
