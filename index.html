@@ -202,7 +202,7 @@
         border-radius:999px;
       }
 
-      /* Clear (unchanged) */
+      /* Clear */
       #mobileClear{
         width:auto;
         padding:14px 18px;
@@ -219,47 +219,31 @@
         height:100%;
       }
 
-      /* Settings modal (✅ slightly taller to avoid scrolling now that Mute exists) */
+      /* Settings modal */
       #settingsMenu{
         left:16px;
         right:16px;
         top:50%;
         transform:translateY(-50%);
         width:auto;
-        max-height:55vh;     /* was 42vh */
+        max-height:55vh;
         overflow:auto;
         border-radius:22px;
         padding:10px 10px 10px;
         box-shadow:0 16px 48px rgba(0,0,0,.32);
       }
 
-      /* Hide images toggle on mobile/tablet (since we skip media entirely there) */
+      /* Hide images toggle on mobile/tablet */
       #imagesItem{display:none !important;}
 
-      .settings-item{
-        margin:0;
-        padding:10px 4px;
-      }
-      .switch-label{
-        font-size:1.65rem;
-        line-height:1.15;
-      }
+      .settings-item{margin:0;padding:10px 4px;}
+      .switch-label{font-size:1.65rem;line-height:1.15;}
       .switch{width:110px;height:56px}
       .slider{border-radius:56px}
-      .slider:before{
-        width:48px;height:48px;
-        left:4px;bottom:4px;
-      }
+      .slider:before{width:48px;height:48px;left:4px;bottom:4px;}
       input:checked + .slider:before{transform:translateX(50px)}
-      #doneBtn{
-        margin-top:12px;
-        font-size:1.65rem;
-        padding:12px 12px;
-        border-radius:18px;
-        border-width:2px;
-      }
+      #doneBtn{margin-top:12px;font-size:1.65rem;padding:12px 12px;border-radius:18px;border-width:2px;}
 
-      /* Make bell SVG match the emoji size */
       #mobileRing svg{width:2.2rem;height:2.2rem;stroke:currentColor}
     }
   </style>
@@ -331,11 +315,7 @@
     </div>
   </div>
 
-  <!-- Keep old elements hidden (compat) -->
-  <div id="controls"><button id="zoomOutOld">A-</button><button id="zoomInOld">A+</button></div>
-  <div id="shortcuts"></div>
-
-  <!-- Media: DO NOT set src attributes here -->
+  <!-- Media -->
   <img data-src="pipi_new1.png" loading="lazy" decoding="async" id="dog" alt="pipi image" style="display:none">
   <img data-src="jp.png" loading="lazy" decoding="async" id="jpHead" alt="jp image" style="display:none">
   <audio id="pipiSound" data-src="pipi.wav" preload="none"></audio>
@@ -345,7 +325,6 @@
   <audio id="chimeSound" src="chime.wav" preload="none"></audio>
 
   <script>
-    // ---------- DOM refs ----------
     const body=document.body;
     const editor=document.getElementById('editor');
 
@@ -377,7 +356,7 @@
 
     const chimeAudio=document.getElementById('chimeSound');
 
-    // ---------- Mobile/tablet detection (✅ iPad + tablets treated as mobile) ----------
+    // ---------- Mobile/tablet detection ----------
     const isMobile = (() => {
       const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
       const touchPoints = navigator.maxTouchPoints || 0;
@@ -387,10 +366,11 @@
       return uaMobile || isIPadLike || (coarse && touchPoints > 0);
     })();
 
-    // ---------- Per-device IDs + settings ----------
+    // ---------- Keys ----------
     const CLIENT_ID_KEY = 'tototype_client_id';
     const MUTE_KEY = 'tototype_mute_ring';
     const SOLO_KEY = 'tototype_solo_text';
+    const LAST_RING_SEEN_KEY = 'tototype_last_ring_seen'; // ✅ new: suppress initial ring snapshot
 
     function makeId(len=10){
       const chars='abcdefghijklmnopqrstuvwxyz0123456789';
@@ -464,16 +444,15 @@
         editor.style.pointerEvents = 'auto';
       }
 
-      // Clear button visible only when NOT viewer
       if (mobileClear) mobileClear.style.display = (mode === 'viewer') ? 'none' : '';
 
-      // ✅ Ring button hidden entirely in Viewer mode (desktop + mobile)
+      // ring hidden in viewer
       const ringDisplay = (mode === 'viewer') ? 'none' : '';
       ringBtn.style.display = ringDisplay;
       if (mobileRing && mobileRing.parentElement) mobileRing.parentElement.style.display = ringDisplay;
     }
 
-    // ---------- Media lazy-load (desktop only; mobile/tablet skips) ----------
+    // ---------- Media lazy-load ----------
     let mediaLoaded = false;
     function loadMediaIfNeeded(){
       if (mediaLoaded) return;
@@ -506,50 +485,7 @@
       }
     }
 
-    // ---------- Soundboard visuals (desktop only) ----------
-    const AudioContext=window.AudioContext||window.webkitAudioContext;
-    let audioCtx;
-    function ensureCtx(){ if(!AudioContext) return null; if(!audioCtx) audioCtx = new AudioContext(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
-    function attachAnalyser(el){
-      if(el.analyser || !ensureCtx() || !el.getAttribute('src')) return;
-      const src = audioCtx.createMediaElementSource(el);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      src.connect(analyser);
-      analyser.connect(audioCtx.destination);
-      el.analyser = analyser;
-    }
-    function pulse(el,audio){
-      attachAnalyser(audio);
-      if(!audio.analyser) return;
-      const data=new Uint8Array(audio.analyser.frequencyBinCount);
-      function step(){
-        if(audio.paused||audio.ended){ el.style.transform=''; return; }
-        audio.analyser.getByteFrequencyData(data);
-        let sum=0; for(let i=0;i<data.length;i++) sum+=data[i];
-        const scale=1+(sum/data.length/255)*0.12;
-        el.style.transform=`scale(${scale})`;
-        requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-    function addSoundEvents(el,audio){
-      el.addEventListener('pointerdown',()=>{
-        if (isMobile) return;
-        if (!imagesSwitch.checked) return;
-        loadMediaIfNeeded();
-        el.classList.add('pressed');
-        try{ audio.currentTime=0; audio.play(); }catch{}
-        pulse(el,audio);
-      });
-      el.addEventListener('pointerup',()=>el.classList.remove('pressed'));
-      el.addEventListener('pointerleave',()=>el.classList.remove('pressed'));
-      audio.addEventListener('ended',()=>{ el.classList.remove('pressed'); el.style.transform=''; });
-    }
-    addSoundEvents(dog,pipiAudio);
-    addSoundEvents(jpHead,jpAudio);
-
-    // ---------- Ring: play + mute + dedupe ----------
+    // ---------- Ring ----------
     let chimeUnlocked = false;
     let lastSentRingId = null;
 
@@ -562,9 +498,7 @@
         chimeAudio.currentTime = 0;
         chimeAudio.volume = 1;
         chimeUnlocked = true;
-      }catch{
-        // Will unlock on a later gesture
-      }
+      }catch{}
     }
 
     async function playChime(){
@@ -573,17 +507,27 @@
       try{
         chimeAudio.currentTime = 0;
         await chimeAudio.play();
-      }catch{
-        // iOS may still block until a gesture
-      }
+      }catch{}
     }
 
-    // Remote ring event handler
+    // ✅ per-device last-seen ring id to avoid random chime on attach/reconnect
+    function getLastRingSeen(){ return localStorage.getItem(LAST_RING_SEEN_KEY) || ''; }
+    function setLastRingSeen(id){ localStorage.setItem(LAST_RING_SEEN_KEY, id || ''); }
+
     window.TotoTypeUI = window.TotoTypeUI || {};
     window.TotoTypeUI.onRingEvent = async (ev) => {
       if (!ev || !ev.id) return;
-      // Avoid double-play on sender device if we already played locally immediately
+
+      // suppress first snapshot / repeats
+      const lastSeen = getLastRingSeen();
+      if (ev.id === lastSeen) return;
+
+      // record immediately so reconnects don't replay
+      setLastRingSeen(ev.id);
+
+      // Dedup: if sender already played locally instantly, don't double-play
       if (ev.sender === clientId && lastSentRingId && ev.id === lastSentRingId) return;
+
       await playChime();
     };
 
@@ -598,7 +542,7 @@
       refreshState();
     };
 
-    // ---------- Clear helpers ----------
+    // ---------- Clear ----------
     function clearEditorAndReset(){
       document.execCommand('selectAll');
       document.execCommand('delete');
@@ -620,7 +564,7 @@
       if (!isMobile) editor.focus();
     }
 
-    // ---------- Settings open/close + disable typing while open ----------
+    // ---------- Settings open/close ----------
     let settingsOpen = false;
 
     function setEditorInteractiveWhileSettings(open){
@@ -687,9 +631,7 @@
       if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:true });
       if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(true);
 
-      // ✅ unlock chime on mode switch gesture
       await unlockChime();
-
       refreshState();
     }
 
@@ -708,9 +650,7 @@
       if (window.FirebasePad?.enable) await window.FirebasePad.enable({ writable:false });
       if (window.FirebasePad?.setWritable) window.FirebasePad.setWritable(false);
 
-      // ✅ unlock chime on mode switch gesture
       await unlockChime();
-
       refreshState();
     }
 
@@ -744,7 +684,6 @@
       if (isMobile || mode === 'viewer') editor.blur();
     }
 
-    // Share / Viewer mutually exclusive
     shareSwitch.addEventListener('change', async ()=>{
       if (shareSwitch.checked) viewerSwitch.checked = false;
       await handleModeChange();
@@ -759,9 +698,7 @@
       darkSwitch.checked ? body.classList.add('dark-mode') : body.classList.remove('dark-mode');
       refreshState();
     });
-
     muteSwitch.addEventListener('change',()=> setMuted(muteSwitch.checked));
-
     imagesSwitch.addEventListener('change',()=> toggleImages(imagesSwitch.checked));
 
     // ---------- Input handling ----------
@@ -772,49 +709,22 @@
       refreshState();
     });
 
-    // Desktop keyboard shortcuts
-    document.addEventListener('keydown',e=>{
-      if (isMobile) return;
-      if (currentMode() === 'viewer') return;
-
-      if(e.ctrlKey && e.key==='Backspace'){
-        e.preventDefault();
-        clearAndPropagate();
-        return;
-      }
-      if(e.ctrlKey && (e.key==='+' || e.key==='=')){
-        e.preventDefault();
-        fontSizeVW = Math.min(fontSizeVW+1,20);
-        setFontSize();
-      }
-      if(e.ctrlKey && e.key==='-'){
-        e.preventDefault();
-        fontSizeVW = Math.max(fontSizeVW-1,2);
-        setFontSize();
-      }
-    });
-
-    // Desktop zoom buttons
+    // Zoom buttons
     zoomInBtn.addEventListener('click',()=>{ fontSizeVW=Math.min(fontSizeVW+1,20); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
     zoomOutBtn.addEventListener('click',()=>{ fontSizeVW=Math.max(fontSizeVW-1,2); setFontSize(); if(currentMode()!=='viewer') editor.focus(); });
 
-    // Mobile clear button
+    // Mobile clear
     mobileClear.addEventListener('click', clearAndPropagate);
 
     // ---------- Ring button behavior ----------
     async function ringPressed(){
       await unlockChime();
-
       const mode = currentMode();
 
       if (mode === 'solo') {
-        // Solo: ONLY local play (no broadcast)
         await playChime();
         return;
       }
-
-      // Share: broadcast + local instant play
-      // Viewer: (button hidden, but safeguard anyway) do nothing
       if (mode === 'viewer') return;
 
       const ringId = makeId(10);
@@ -825,6 +735,8 @@
       if (window.FirebasePad?.ring) {
         try {
           await window.FirebasePad.ring({ id: ringId, t: Date.now(), sender: clientId });
+          // ✅ record immediately so this device won't replay on reconnect
+          setLastRingSeen(ringId);
         } catch (e) {
           console.error("Ring write failed:", e);
         }
@@ -836,7 +748,7 @@
     ringBtn.addEventListener('click', ringPressed);
     mobileRing.addEventListener('click', ringPressed);
 
-    // Also try to unlock audio on any first interaction
+    // Unlock attempt on first gesture
     document.addEventListener('pointerdown', () => { unlockChime(); }, { once: true });
 
     // ---------- init ----------
@@ -845,14 +757,12 @@
       viewerSwitch.checked = false;
       prevMode = 'solo';
 
-      // restore mute
       setMuted(isMuted());
 
       defaultFontVW = isMobile ? DEFAULT_FONT_VW_MOBILE : DEFAULT_FONT_VW_DESKTOP;
       fontSizeVW = defaultFontVW;
       setFontSize();
 
-      // ✅ mobile/tablet: skip media entirely
       if (isMobile) {
         imagesSwitch.checked = false;
         toggleImages(false);
