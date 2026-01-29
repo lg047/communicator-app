@@ -32,6 +32,13 @@
     body.dark-mode{color:#fff;background:#000}
     body.dark-mode #editor{color:#fff}
 
+    /* ✅ prevent the "white bar" edge case by giving html a background too */
+    html { background:#fff; }
+    html.dark-mode { background:#000; }
+
+    /* When settings open, force the underlying safe-areas to match overlay (kills bottom white strip) */
+    html.settings-open, body.settings-open { background: rgba(0,0,0,.45) !important; }
+
     #editor{
       width:100%;
       height:calc(100% - 80px);
@@ -151,7 +158,6 @@
       background:rgba(255,255,255,.65);
       color:#333;
       z-index:1000;
-      user-select:none;
       pointer-events:none;
     }
     body.dark-mode #footerBar{
@@ -182,7 +188,7 @@
       color:#eee;
     }
 
-    /* Keep old elements around for compatibility; hide on desktop now */
+    /* Keep old elements around for compatibility; hide */
     #controls, #shortcuts { display:none; }
 
     #dog,#jpHead{position:fixed;bottom:0;height:240px;pointer-events:auto;cursor:pointer;transition:transform .05s linear,filter .1s}
@@ -233,6 +239,11 @@
         height:100%;
       }
 
+      /* ✅ PWA-only: add extra separation between buttons and text */
+      body.pwa-standalone #editor{
+        padding-top:165px; /* extra vertical separation only in installed app */
+      }
+
       /* Settings modal */
       #settingsMenu{
         left:16px;
@@ -273,7 +284,7 @@
   </button>
   <button id="settingsBtn" aria-label="Settings">⚙</button>
 
-  <!-- Mobile buttons: ring left; clear+gear right -->
+  <!-- Mobile buttons -->
   <div id="mobileRingWrap">
     <button class="topBtn" id="mobileRing" aria-label="Ring">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -339,14 +350,46 @@
   <audio id="chimeSound" src="chime.wav" preload="none"></audio>
 
   <script>
-    // ✅ Register service worker (needed for installable PWA on Chrome/Android)
+    // ✅ Register service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(()=>{});
       });
     }
 
+    // ✅ Detect standalone PWA and mark body/html (for styling & behavior)
+    const isStandalone = (() => {
+      try {
+        return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || (window.navigator && window.navigator.standalone === true);
+      } catch { return false; }
+    })();
+    if (isStandalone) {
+      document.body.classList.add('pwa-standalone');
+    }
+
+    // ✅ Disable pinch-zoom ONLY in PWA standalone (best-effort on iOS)
+    if (isStandalone) {
+      const prevent = (e) => { e.preventDefault(); };
+      document.addEventListener('gesturestart', prevent, { passive:false });
+      document.addEventListener('gesturechange', prevent, { passive:false });
+      document.addEventListener('gestureend', prevent, { passive:false });
+
+      // Also block 2-finger touchmove zoom gestures (doesn't affect single-finger scrolling)
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches.length > 1) e.preventDefault();
+      }, { passive:false });
+
+      // Prevent double-tap zoom
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) e.preventDefault();
+        lastTouchEnd = now;
+      }, { passive:false });
+    }
+
     const body=document.body;
+    const html=document.documentElement;
     const editor=document.getElementById('editor');
 
     const ringBtn=document.getElementById('ringBtn');
@@ -444,6 +487,8 @@
 
     function updateBg(){
       body.style.backgroundColor = darkSwitch.checked ? '#000' : '#fff';
+      html.style.backgroundColor = darkSwitch.checked ? '#000' : '#fff';
+      if (darkSwitch.checked) html.classList.add('dark-mode'); else html.classList.remove('dark-mode');
     }
 
     function refreshState(){
@@ -600,12 +645,17 @@
       setEditorInteractiveWhileSettings(true);
       settingsMenu.style.display='flex';
       if (isMobile) settingsOverlay.style.display='block';
+      body.classList.add('settings-open');
+      html.classList.add('settings-open');
     }
     function closeSettings(){
       settingsOpen = false;
       settingsMenu.style.display='none';
       settingsOverlay.style.display='none';
       setEditorInteractiveWhileSettings(false);
+      body.classList.remove('settings-open');
+      html.classList.remove('settings-open');
+      refreshState(); // restore proper bg
       if (!isMobile && currentMode() !== 'viewer') editor.focus();
     }
 
