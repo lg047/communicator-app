@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- ✅ critical for iPhone sizing + media queries -->
+  <!-- ✅ critical for iPhone/iPad sizing + media queries -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <meta property="og:title" content="TotoType" />
@@ -15,7 +15,7 @@
 
   <style>
     html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;transition:background-color .3s,color .3s}
-    body.dark-mode{color:#fff;background:#000} /* ✅ restore original dark mode behavior */
+    body.dark-mode{color:#fff;background:#000}
     body.dark-mode #editor{color:#fff}
 
     #editor{
@@ -131,8 +131,6 @@
       gap:8px;
       pointer-events:auto;
     }
-
-    /* ✅ darker button boxes so they look clickable */
     #zoomGroup button{
       font-size:1.1rem;
       padding:.38em .75em;
@@ -154,7 +152,7 @@
     #jpHead{right:0;height:225px}
     #dog.pressed,#jpHead.pressed{filter:brightness(.8)}
 
-    /* ---------- Mobile / iOS UI ---------- */
+    /* ---------- Mobile / iOS UI (treat iPad/tablet as mobile too) ---------- */
     @media (max-width: 900px), (pointer: coarse) {
       /* Use mobile top bar instead of desktop gear */
       #settingsBtn{display:none;}
@@ -205,7 +203,7 @@
         box-shadow:0 16px 48px rgba(0,0,0,.32);
       }
 
-      /* Hide images toggle on mobile (as before) */
+      /* Hide images toggle on mobile/tablet (since we skip media entirely there) */
       #imagesItem{display:none !important;}
 
       .settings-item{
@@ -321,12 +319,20 @@
     const pipiAudio=document.getElementById('pipiSound');
     const jpAudio=document.getElementById('jpSound');
 
-    // ---------- Mobile detection ----------
+    // ---------- Mobile/tablet detection (✅ iPad + tablets treated as mobile) ----------
     const isMobile = (() => {
+      const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+      const touchPoints = navigator.maxTouchPoints || 0;
+
+      // iPadOS often reports as Mac; this catches it
+      const isIPadLike = (navigator.platform === 'MacIntel' && touchPoints > 1);
+
+      // classic mobile UAs
       const ua = navigator.userAgent || '';
       const uaMobile = /iPhone|iPad|iPod|Android/i.test(ua);
-      const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-      return uaMobile || (coarse && window.innerWidth <= 900) || window.innerWidth <= 768;
+
+      // Treat ANY coarse-pointer touch device (incl. iPad/tablet) as mobile for media + UI logic
+      return uaMobile || isIPadLike || (coarse && touchPoints > 0);
     })();
 
     // ---------- Local-only storage (Solo mode) ----------
@@ -359,7 +365,6 @@
       modeLabel.textContent = `Mode: ${mode[0].toUpperCase()+mode.slice(1)}`;
     }
 
-    /* ✅ restore main pad background behavior via JS too */
     function updateBg(){
       body.style.backgroundColor = darkSwitch.checked ? '#000' : '#fff';
     }
@@ -388,7 +393,7 @@
       }
     }
 
-    // ---------- Media lazy-load (desktop only) ----------
+    // ---------- Media lazy-load (desktop only; ✅ iPad/tablet now counts as mobile so skips) ----------
     let mediaLoaded = false;
     function loadMediaIfNeeded(){
       if (mediaLoaded) return;
@@ -403,6 +408,7 @@
 
     function toggleImages(show){
       if (isMobile) {
+        // mobile/tablet: skip media entirely
         dog.style.display = 'none';
         jpHead.style.display = 'none';
         [pipiAudio, jpAudio].forEach(a=>{ try{a.pause();a.currentTime=0;}catch{} });
@@ -679,6 +685,7 @@
       fontSizeVW = defaultFontVW;
       setFontSize();
 
+      // ✅ mobile/tablet: skip media entirely, no need for setting
       if (isMobile) {
         imagesSwitch.checked = false;
         toggleImages(false);
@@ -691,7 +698,6 @@
       adjustFontSizeToFit();
       applyEditorByMode();
 
-      // ensure bg matches toggle state
       if (darkSwitch.checked) body.classList.add('dark-mode');
       else body.classList.remove('dark-mode');
 
